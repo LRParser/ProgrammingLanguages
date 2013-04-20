@@ -34,7 +34,6 @@ tokens = (
         'RPAREN',
         'SEMICOLON',
         'COMMA',
-        'AMP',
         'NUMBER',
         'ASSIGNOP',
         'WHILE',
@@ -49,13 +48,7 @@ tokens = (
         'END',
         'IDENT',
         'LEFTBRACKET',
-        'RIGHTBRACKET',
-        'CONS',
-        'CAR',
-        'CDR',
-        'NULLP',
-        'INTP',
-        'LISTP'
+        'RIGHTBRACKET'
 )
 
         # These are all caught in the IDENT rule, typed there.
@@ -95,7 +88,6 @@ t_CDR = r'CDR'
 t_NULLP = r'NULLP'
 t_INTP = r'INTP'
 t_LISTP = r'LISTP'
-t_AMP = r'&'
 
 def t_IDENT( t ):
         #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -167,7 +159,7 @@ def p_list_leftbracket_sequence_rightbracket(p):
 
 def p_list_leftparen_rightparen(p):
     'list : LEFTBRACKET RIGHTBRACKET'
-    print("p_list_leftparen_rightparen")
+    print("p_list_leftbracket_rightbracket")
     p[0] = List()
 
 def p_sequence_element_comma_sequence(p):
@@ -205,6 +197,7 @@ def p_expr_list( p ) :
     '''expr_list : expr COMMA expr_list
                 | expr'''
     print("p_expr_list")
+    # Note: an expr_list really has nothing to do with a list. It's just used in FuncCall to store arguments to a function, e.g. foo(1,2,3)
     if len( p ) == 2 :  # single expr => new list
         p[0] = [ p[1] ]
     else :  # we have a expr_list, keep adding to front
@@ -285,12 +278,8 @@ def p_func_call( p ) :
 def p_error( p ):
     print "Syntax error in input!", str( p )
     sys.exit( 2 )
-
-
-
-
-
-    # now, build the parser
+    
+# now, build the parser
 yacc.yacc()
 
 
