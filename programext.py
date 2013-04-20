@@ -47,7 +47,7 @@
 #
 
 import sys
-
+import copy
 ####  CONSTANTS   ################
 
     # the variable name used to store a proc's return value
@@ -105,19 +105,22 @@ class List( Element ) :
     def __init__( self, s=None ) :
         self.values = list()
         if(s is not None):
-            self.values.append(s)
+            if (isinstance(s,Sequence)) :
+                # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
+                for val in s.values :
+                    self.values.append(val)
+            else :
+                self.values.append(s)
 
     def eval( self, nt, ft ) :
-        evaledList = list()
-        if(len(self.values) == 1) : # List containing sequence
-            for val in self.values :
-                evaledList.append(val.eval(nt,ft))
-        return evaledList
+        evaledList = copy.deepcopy(self.values)
+        for i in xrange(len(evaledList)) :
+            evaledList[i] = evaledList[i].eval(nt,ft)
+        return evaledList 
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
             val.display(nt,ft,depth+1)
-
 
 class Sequence( Expr ) :
 
@@ -138,7 +141,9 @@ class Sequence( Expr ) :
         for val in self.values :
             evaledSeq.append(val.eval(nt,ft))
         return evaledSeq
-
+        #for val in self.values :
+        #    yield val.eval(nt,ft)
+        
     def display( self, nt, ft, depth=0 ) :
         if self.values is not None :
             for val in self.values :
@@ -264,8 +269,10 @@ class AssignStmt( Stmt ) :
     
     def eval( self, nt, ft ) :
         if(isinstance(self.rhs.eval(nt,ft),list)) :
-            print self.rhs.eval(nt,ft);
-        nt[ self.name ] = self.rhs.eval( nt, ft )
+            # We shouldn't eval the list at assignment time, per instructions
+            nt[ self.name ] = self.rhs
+        else :
+            nt[ self.name ] = self.rhs.eval( nt, ft )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -410,8 +417,8 @@ class Program :
     def dump( self ) :
         print "Dump of Symbol Table"
         for k in self.nameTable :
-            if(isinstance(self.nameTable[k],list)):
-                print "  %s -> %s " % ( str(k), self.nameTable[k] )
+            if(isinstance(self.nameTable[k],List)):
+                print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"

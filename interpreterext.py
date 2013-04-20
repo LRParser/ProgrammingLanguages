@@ -34,7 +34,6 @@ tokens = (
         'RPAREN',
         'SEMICOLON',
         'COMMA',
-        'AMP',
         'NUMBER',
         'ASSIGNOP',
         'WHILE',
@@ -49,15 +48,8 @@ tokens = (
         'END',
         'IDENT',
         'LEFTBRACKET',
-        'RIGHTBRACKET',
-        'CONS',
-        'CAR',
-        'CDR',
-        'NULLP',
-        'INTP',
-        'LISTP'
+        'RIGHTBRACKET'
 )
-
         # These are all caught in the IDENT rule, typed there.
 reserved = {
                 'while' : 'WHILE',
@@ -89,13 +81,6 @@ t_SEMICOLON = r';'
 t_COMMA         = r','
 t_LEFTBRACKET = r'\['
 t_RIGHTBRACKET = r'\]'
-t_CONS = r'CONS'
-t_CAR = r'CAR'
-t_CDR = r'CDR'
-t_NULLP = r'NULLP'
-t_INTP = r'INTP'
-t_LISTP = r'LISTP'
-t_AMP = r'&'
 
 def t_IDENT( t ):
         #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -172,7 +157,6 @@ def p_list_leftparen_rightparen(p):
 def p_sequence_element_comma_sequence(p):
     'sequence : element COMMA sequence'
     print("p_sequence_element_comma_sequence")
-    print(str(p[1].value)+","+str(p[3]))
     p[0] = Sequence(p[1],p[3])
 
 def p_sequence_element(p):
@@ -183,7 +167,7 @@ def p_sequence_element(p):
 def p_element_list(p):
     'element : list'
     print("p_element_list")
-    p[0] = List(p[1])
+    p[0] = p[1]
 
 def p_element_expr(p):
     'element : expr'
