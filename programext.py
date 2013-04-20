@@ -47,7 +47,8 @@
 #
 
 import sys
-
+import copy
+import itertools
 ####  CONSTANTS   ################
 
     # the variable name used to store a proc's return value
@@ -105,21 +106,23 @@ class List( Element ) :
     def __init__( self, s=None ) :
         self.values = list()
         if(s is not None):
-            self.values.append(s)
+            if (isinstance(s,Sequence)) :
+                # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
+                for val in s.values :
+                    self.values.append(val)
+            else :
+                self.values.append(s)
 
     def eval( self, nt, ft ) :
-        print("Eval list")
-        evaledList = list()
-        if(len(self.values) == 1) : # List containing sequence
-            for val in self.values :
-                evaledList.append(val.eval(nt,ft))
+        
+        evaledList = copy.deepcopy(self.values)
+        for i in xrange(len(evaledList)) :
+            evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
-            print("List")
             val.display(nt,ft,depth+1)
-
 
 class Sequence( Expr ) :
 
@@ -140,7 +143,9 @@ class Sequence( Expr ) :
         for val in self.values :
             evaledSeq.append(val.eval(nt,ft))
         return evaledSeq
-
+        #for val in self.values :
+        #    yield val.eval(nt,ft)
+        
     def display( self, nt, ft, depth=0 ) :
         if self.values is not None :
             for val in self.values :
@@ -224,8 +229,22 @@ class FunCall( Expr ) :
         self.name = name
         self.argList = argList
     
+    def car( self, nt, ft ) :
+        if not(len(self.argList) == 1) :
+            raise Exception("Car function requires exactly 1 argument")
+
+        listToGetCarFrom = self.argList[0].eval(nt,ft)
+        
+        if not(isinstance(listToGetCarFrom,List)) :
+            raise Exception("Can only call car on List")
+
+        return listToGetCarFrom.values[0].eval(nt,ft)
+
     def eval( self, nt, ft ) :
-        return ft[ self.name ].apply( nt, ft, self.argList )
+        if (self.name == "car") :
+            return self.car(nt,ft)
+        else :
+            return ft[ self.name ].apply( nt, ft, self.argList )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
@@ -265,13 +284,11 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
     
     def eval( self, nt, ft ) :
-        print("Eval returns: "+str(type(self.rhs.eval(nt,ft))))
-        print("Printed as string it's: "+str(self.rhs.eval(nt,ft)))
         if(isinstance(self.rhs.eval(nt,ft),list)) :
-            print("Print as list")
-            print self.rhs.eval(nt,ft);
-        nt[ self.name ] = self.rhs.eval( nt, ft )
-        print("Eval for: "+self.name+" complete")
+            # We shouldn't eval the list at assignment time, per instructions
+            nt[ self.name ] = self.rhs
+        else :
+            nt[ self.name ] = self.rhs.eval( nt, ft )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -415,13 +432,10 @@ class Program :
     
     def dump( self ) :
         print "Dump of Symbol Table"
-        print "Name Table"
         for k in self.nameTable :
-            if(isinstance(self.nameTable[k],list)):
-                print self.nameTable[k]
-                #print("Found list, len: "+str(len(self.nameTable[k])))
-                #for val in self.nameTable[k] :
-                #    print(str(val))
+            if(isinstance(self.nameTable[k],List)):
+                print("Print List")
+                print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"
