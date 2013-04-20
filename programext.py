@@ -48,6 +48,7 @@
 
 import sys
 import copy
+import itertools
 ####  CONSTANTS   ################
 
     # the variable name used to store a proc's return value
@@ -113,10 +114,11 @@ class List( Element ) :
                 self.values.append(s)
 
     def eval( self, nt, ft ) :
+        
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
             evaledList[i] = evaledList[i].eval(nt,ft)
-        return evaledList 
+        return evaledList
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
@@ -227,8 +229,22 @@ class FunCall( Expr ) :
         self.name = name
         self.argList = argList
     
+    def car( self, nt, ft ) :
+        if not(len(self.argList) == 1) :
+            raise Exception("Car function requires exactly 1 argument")
+
+        listToGetCarFrom = self.argList[0].eval(nt,ft)
+        
+        if not(isinstance(listToGetCarFrom,List)) :
+            raise Exception("Can only call car on List")
+
+        return listToGetCarFrom.values[0].eval(nt,ft)
+
     def eval( self, nt, ft ) :
-        return ft[ self.name ].apply( nt, ft, self.argList )
+        if (self.name == "car") :
+            return self.car(nt,ft)
+        else :
+            return ft[ self.name ].apply( nt, ft, self.argList )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
@@ -418,6 +434,7 @@ class Program :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],List)):
+                print("Print List")
                 print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )

@@ -212,6 +212,7 @@ def p_term_fact( p ) :
 
 def p_fact_NUM( p ) :
     'fact : NUMBER'
+    print("p_fact_NUMBER")
     p[0] = Number(p[1])
 
 def p_fact_expr( p ) :
