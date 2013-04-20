@@ -325,9 +325,11 @@ def test_parser( data ) :
 if __name__ == '__main__' :
 
     data=sys.stdin.read()
-    print(data)
 
+    print"Input program is: "
     print(data)
+    print "End input program"
+    print("Call lexer")
     test_scanner(data)
     print("Call parser")
     test_parser(data)
