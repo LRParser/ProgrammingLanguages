@@ -108,7 +108,6 @@ class List( Element ) :
             self.values.append(s)
 
     def eval( self, nt, ft ) :
-        print("Eval list")
         evaledList = list()
         if(len(self.values) == 1) : # List containing sequence
             for val in self.values :
@@ -117,7 +116,6 @@ class List( Element ) :
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
-            print("List")
             val.display(nt,ft,depth+1)
 
 
@@ -265,13 +263,9 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
     
     def eval( self, nt, ft ) :
-        print("Eval returns: "+str(type(self.rhs.eval(nt,ft))))
-        print("Printed as string it's: "+str(self.rhs.eval(nt,ft)))
         if(isinstance(self.rhs.eval(nt,ft),list)) :
-            print("Print as list")
             print self.rhs.eval(nt,ft);
         nt[ self.name ] = self.rhs.eval( nt, ft )
-        print("Eval for: "+self.name+" complete")
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -415,13 +409,9 @@ class Program :
     
     def dump( self ) :
         print "Dump of Symbol Table"
-        print "Name Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],list)):
-                print self.nameTable[k]
-                #print("Found list, len: "+str(len(self.nameTable[k])))
-                #for val in self.nameTable[k] :
-                #    print(str(val))
+                print "  %s -> %s " % ( str(k), self.nameTable[k] )
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"

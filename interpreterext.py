@@ -140,7 +140,6 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
-    P.display()
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list
