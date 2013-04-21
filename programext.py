@@ -74,12 +74,12 @@ class Heap :
         else :
             raise Exception('Heap is full')
 
-    def collectGarbage(self, nt) :
+    def collectGarbage(self, nt, ft, gh) :
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
                 print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
-                val.mark()
+                val.mark(nt, ft, gh)
             elif(isinstance(val,Number)) :
                 print("Marking number: " + str(val) + "identified by: "+name+ "so as to not be collected")
         for val in self.heap :
@@ -145,41 +145,39 @@ class Number( Element ) :
 class List( Element ) :
 
     def __init__( self, s=None ) :
-        self.values = list()
+        self.sequence = s
         self.marked = False
-        if(s is not None):
-            if (isinstance(s,Sequence)) :
-                # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
-                for val in s.values :
-                    self.values.append(val)
-            else :
-                self.values.append(s)
-
-    #def eval( self, nt, ft, gh ) :
-    #    evaledList = copy.deepcopy(self.values)
-    #    for i in xrange(len(evaledList)) :
-    #        evaledList[i] = evaledList[i].eval(nt,ft, gh)
-    #    return evaledList
 
     def display( self, nt, ft, depth=0 ) :
-        for val in self.values :
-            val.display(nt,ft,depth+1)
+        if(self.sequence is not None) :
+            self.sequence.display(nt,ft,depth+1)
 
     def addToHead( self, val ) :
         print("Adding: "+str(val))
         self.values.insert(0,val)
 
-    def successorLists( self ) :
+    def eval( self, nt, ft, gh ) :
+        if(self.sequence is not None) :
+            retList = list()
+            for val in self.sequence.eval(nt,ft,gh) :
+                print(val)
+                retList.append(val)
+            return retList
+        else :
+            return list()
+
+    def successorLists( self, nt, ft, gh ) :
         retVal = list()
-        for val in self.values :
+        for val in self.sequence.eval(nt,ft,gh) :
             if (isinstance(val,List)) :
                 retVal.append(val)
+        return retVal
 
     # Recursively mark this list and any sub-lists as still being referenced
-    def mark(self) :
+    def mark(self, nt, ft, gh) :
         if not (self.marked):
             self.marked = True
-            successorLists = self.successorLists()
+            successorLists = self.successorLists(nt, ft, gh)
             if (successorLists is not None) :
                 for val in successorLists:
                     if not (val.marked):
@@ -189,27 +187,19 @@ class List( Element ) :
 class Sequence( Expr ) :
 
     def __init__( self, e, s=None ) :
-        self.values = list()
-        self.insertHead(e)
-        if (s is not None):
-            self.appendTail(s)
-               
-    def insertHead( self , e ) :
-        self.values.insert(0,e)
+        self.element = e
+        self.sequence = s
 
-    def appendTail ( self, e ) :
-        self.values.append(e)
-    
     def eval( self, nt, ft, gh ) :
-        evaledSeq = list()
-        for val in self.values :
-            evaledSeq.append(val.eval(nt,ft, gh))
-        return evaledSeq
-        
+        seq = self
+        while(seq is not None) :
+            yield seq.element.eval(nt,ft,gh)
+            seq = seq.sequence
+
     def display( self, nt, ft, depth=0 ) :
-        if self.values is not None :
-            for val in self.values :
-                val.display(nt, ft, depth)
+        self.element.display(nt,ft,depth)
+        if(self.sequence is not None):
+            self.sequence.display(nt,ft,depth)
         else :
             print("Empty")
 
@@ -319,7 +309,7 @@ class FunCall( Expr ) :
             print("Adding to heap: "+str(copiedList))
             gh.add(copiedList)
         else :
-            gh.collectGarbage(nt)
+            gh.collectGarbage(nt,ft,gh)
 
         # Check if we have space to add atom to from of copied list; if not, run GC
         if(gh.hasSpace()):
@@ -327,10 +317,11 @@ class FunCall( Expr ) :
             gh.add(atom)
         # Not yet fully implemented
         else :
-            gh.collectGarbage(nt)      
+            gh.collectGarbage(nt,ft,gh)      
 
-        copiedList.addToHead(atom)
-        return copiedList
+        seq = Sequence(atom,listToAddAtomTo)
+        newList = List(seq)
+        return newList
 
     def eval( self, nt, ft, gh ) :
         if (self.name == "car") :
@@ -378,7 +369,11 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
     
     def eval( self, nt, ft, gh ) :
-        nt[ self.name ] = self.rhs.eval( nt, ft, gh )
+        if(isinstance(self.rhs,List)) :
+            # Lists aren't eval'd at assignment time; the values might change. Members are only evalued when we car an item off and eval it
+            nt[ self.name ] = self.rhs
+        else :
+            nt[ self.name ] = self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -539,4 +534,4 @@ class Program :
 
     # A helper method that can be used to force garbage collection even before heap is full
     def collectGarbage( self ) :
-        self.globalHeap.collectGarbage(self.nameTable)
+        self.globalHeap.collectGarbage(self.nameTable,self.funcTable,self.globalHeap)
