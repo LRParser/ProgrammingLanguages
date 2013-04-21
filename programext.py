@@ -248,8 +248,12 @@ class FunCall( Expr ) :
         return listToGetCarFrom.values[0].eval(nt,ft)
 
     def eval( self, nt, ft ) :
-        if (self.name == "car") :
-            return self.car(nt,ft)
+        func = getattr(self, self.name, None)
+        # Is this function defined in this class?
+        if func:
+            # It is, so call it (like car, cdr, etc...)
+            return func(nt,ft)
+        # Otherwise, call the function from the function table
         else :
             return ft[ self.name ].apply( nt, ft, self.argList )
 
