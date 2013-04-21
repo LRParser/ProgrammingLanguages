@@ -200,8 +200,6 @@ class Sequence( Expr ) :
         self.element.display(nt,ft,depth)
         if(self.sequence is not None):
             self.sequence.display(nt,ft,depth)
-        else :
-            print("Empty")
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -319,8 +317,18 @@ class FunCall( Expr ) :
         else :
             gh.collectGarbage(nt,ft,gh)      
 
-        seq = Sequence(atom,listToAddAtomTo)
-        newList = List(seq)
+        # Shift both rightwards
+
+        sourceSeq = listToAddAtomTo.sequence
+        if(sourceSeq.sequence is not None) :
+            wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
+        else :
+            wrapSeq = Sequence(sourceSeq.element)
+
+        newSeq = Sequence(atom,wrapSeq) 
+        newList = List(newSeq)
+        print("Created list: ")
+        print(newList.eval(nt,ft,gh))
         return newList
 
     def eval( self, nt, ft, gh ) :
@@ -520,7 +528,7 @@ class Program :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],List)):
-                print("Print List")
+#                print("Print List")
                 print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable, self.globalHeap))
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
