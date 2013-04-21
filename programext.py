@@ -303,32 +303,20 @@ class FunCall( Expr ) :
 
         # Check if we have space to copy the passed list; if not, run GC
         if(gh.hasSpace()):
-            copiedList = copy.copy(listToAddAtomTo)
-            print("Adding to heap: "+str(copiedList))
-            gh.add(copiedList)
+            sourceSeq = listToAddAtomTo.sequence
+            if(sourceSeq.sequence is not None) :
+                wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
+            else :
+                wrapSeq = Sequence(sourceSeq.element)
+            newSeq = Sequence(atom,wrapSeq) 
+            newList = List(newSeq)
+            print("Created list: "+str(newList))
+            gh.add(newList)
         else :
             gh.collectGarbage(nt,ft,gh)
 
-        # Check if we have space to add atom to from of copied list; if not, run GC
-        if(gh.hasSpace()):
-            print("Adding to heap: "+str(atom))
-            gh.add(atom)
-        # Not yet fully implemented
-        else :
-            gh.collectGarbage(nt,ft,gh)      
+        # Note: Only GC'ing creating lists for now, need to investigate what other GC scenarios exist
 
-        # Shift both rightwards
-
-        sourceSeq = listToAddAtomTo.sequence
-        if(sourceSeq.sequence is not None) :
-            wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
-        else :
-            wrapSeq = Sequence(sourceSeq.element)
-
-        newSeq = Sequence(atom,wrapSeq) 
-        newList = List(newSeq)
-        print("Created list: ")
-        print(newList.eval(nt,ft,gh))
         return newList
 
     def eval( self, nt, ft, gh ) :
@@ -528,8 +516,8 @@ class Program :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],List)):
-#                print("Print List")
-                print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable, self.globalHeap))
+                print(str(k))
+                self.nameTable[k].display(self.nameTable,self.funcTable, 0)
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"
