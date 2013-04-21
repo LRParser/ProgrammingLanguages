@@ -1,16 +1,23 @@
 CC=python
 INTERPRET=interpreterext.py
+PROGRAMEXT=programext.py
+
 TEST_IN=SampleInputs
-
-
 TEST_DIR=test
 TEST_OUTPUT_DIR=$(TEST_DIR)/output
 TEST_ANSWER_DIR=$(TEST_DIR)/answers
 TESTER=runtest.py
 RUN_TEST=$(CC) $(TEST_DIR)/$(TESTER)
+LINT_FILE=pylint.rc
 
 
-.PHONY : clean test
+.PHONY : clean test lint
+
+
+lint: clean
+	-pylint $(INTERPRET) $(PROGRAMEXT) --rcfile $(TEST_DIR)/$(LINT_FILE)
+	-pychecker $(INTERPRET) $(PROGRAMEXT)
+
 
 # This is the idea... but it needs to be cleaned up to handle a growing number of tests
 test: clean
