@@ -78,10 +78,10 @@ class Heap :
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
-                print("Marking list: " + str(val) + " so as to not be collected")
+                print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
                 val.mark()
             elif(isinstance(val,Number)) :
-                print("Marking number: " + str(val) + "so as to not be collected")
+                print("Marking number: " + str(val) + "identified by: "+name+ "so as to not be collected")
         for val in self.heap :
             if(isinstance(val,List) and (not val.marked)) :
                 print("Freeing unreferenced List: "+str(val))
@@ -119,7 +119,12 @@ class Element( Expr ) :
         self.marked = False
 
     def eval( self, nt, ft, gh ) :
-        return self.value.eval(nt,ft, gh)
+        if(isinstance(self,List)) :
+            return self
+        elif(isinstance(self,Number)) :
+            return self.value.eval(nt,ft, gh)
+        else :
+            raise Exception("Element should only be a List or Number")
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
@@ -150,11 +155,11 @@ class List( Element ) :
             else :
                 self.values.append(s)
 
-    def eval( self, nt, ft, gh ) :
-        evaledList = copy.deepcopy(self.values)
-        for i in xrange(len(evaledList)) :
-            evaledList[i] = evaledList[i].eval(nt,ft, gh)
-        return evaledList
+    #def eval( self, nt, ft, gh ) :
+    #    evaledList = copy.deepcopy(self.values)
+    #    for i in xrange(len(evaledList)) :
+    #        evaledList[i] = evaledList[i].eval(nt,ft, gh)
+    #    return evaledList
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
@@ -301,13 +306,22 @@ class FunCall( Expr ) :
             raise Exception("Cons function requires exactly 2 arguments")
 
         atom = self.argList[0]
-        listToAddAtomTo = self.argList[1].eval(nt,ft, gh)
-        copiedList = copy.deepcopy(listToAddAtomTo)
-
-        if not(isinstance(copiedList,List)) :
+        listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
+        print("atom is: "+str(atom))
+        print("listToAddAtomTo is: "+str(listToAddAtomTo))
+        
+        if not(isinstance(listToAddAtomTo,List)) :
             raise Exception("Can only cons an atom onto a List")
 
-        # Check if enough memory exists to add atom; if not, run GC
+        # Check if we have space to copy the passed list; if not, run GC
+        if(gh.hasSpace()):
+            copiedList = copy.copy(listToAddAtomTo)
+            print("Adding to heap: "+str(copiedList))
+            gh.add(copiedList)
+        else :
+            gh.collectGarbage(nt)
+
+        # Check if we have space to add atom to from of copied list; if not, run GC
         if(gh.hasSpace()):
             print("Adding to heap: "+str(atom))
             gh.add(atom)
@@ -364,11 +378,7 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
     
     def eval( self, nt, ft, gh ) :
-        if(isinstance(self.rhs.eval(nt,ft, gh),list)) :
-            # We shouldn't eval the list at assignment time, per instructions
-            nt[ self.name ] = self.rhs
-        else :
-            nt[ self.name ] = self.rhs.eval( nt, ft, gh )
+        nt[ self.name ] = self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
