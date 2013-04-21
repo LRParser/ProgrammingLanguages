@@ -1,10 +1,14 @@
 ProgrammingLanguages
 ====================
 
-Sample usage:
+type 'make test' to run all of the sample inputs.  If there are no errors, than
+all is well.
 
-python interpretext < ./SampleInputs/add.p
+Adding tests
+------------
 
-python interpretext < ./SampleInputs/assignList1.p
+Create an input file and place it in test/SampleInputs.  Copy the *exact*
+output to a file of the same name and place it in test/answers.  Then, update
+the makefile for the new tests.
 
-python interpretext < ./SampleInputs/assignList2.p
+If you change how any output is presented, new answer files must be generated.
