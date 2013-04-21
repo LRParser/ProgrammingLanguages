@@ -125,6 +125,8 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
+    print "Running garbage collector"
+    P.collectGarbage()
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list

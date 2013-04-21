@@ -56,6 +56,38 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
+######   GARBAGE COLLECTION ########
+
+class Heap :
+
+    def __init__( self, maxSize=100 ) :
+        self.heap = list()
+        self.maxSize = maxSize
+
+    def hasSpace( self ) :
+        return (len(self.heap)<self.maxSize)
+
+    def add ( self, val ) :
+        if(self.hasSpace()):
+            self.heap.append(val)
+        else :
+            raise Exception('Heap is full')
+
+    def collectGarbage(self,runningProgram) :
+        nt = self.runningProgram.nameTable
+        for name in nt :
+            val = nt[name]
+            if(isinstance(val,List)) :
+                print("Marking list so as to not be collected")
+                val.mark()
+        for val in heap :
+            if(not val.marked) :
+                print("Freeing unreferenced list")
+                heap.remove(val)
+            
+
+globalHeap = Heap(100)
+
 ######   CLASSES   ##################
 
 class Expr :
@@ -105,6 +137,7 @@ class List( Element ) :
 
     def __init__( self, s=None ) :
         self.values = list()
+        self.marked = False
         if(s is not None):
             if (isinstance(s,Sequence)) :
                 # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
@@ -114,7 +147,6 @@ class List( Element ) :
                 self.values.append(s)
 
     def eval( self, nt, ft ) :
-        
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
             evaledList[i] = evaledList[i].eval(nt,ft)
@@ -124,12 +156,30 @@ class List( Element ) :
         for val in self.values :
             val.display(nt,ft,depth+1)
 
+    def addToHead( self, val ) :
+        print("Adding: "+str(val))
+        self.values.insert(0,val)
+
+    def successorLists( self ) :
+        retVal = list()
+        for val in self.values :
+            if (isinstance(val,List)) :
+                retVal.append(val)
+
+    # Recursively mark this list and any sub-lists as still being referenced
+    def mark(self) :
+        if not (self.marked):
+            self.marked = True
+            for val in successorLists():
+                if not (val.marked):
+                    mark(val)            
+
 class Sequence( Expr ) :
 
     def __init__( self, e, s=None ) :
         self.values = list()
         self.insertHead(e)
-        if(s is not None):
+        if (s is not None):
             self.appendTail(s)
                
     def insertHead( self , e ) :
@@ -143,8 +193,6 @@ class Sequence( Expr ) :
         for val in self.values :
             evaledSeq.append(val.eval(nt,ft))
         return evaledSeq
-        #for val in self.values :
-        #    yield val.eval(nt,ft)
         
     def display( self, nt, ft, depth=0 ) :
         if self.values is not None :
@@ -240,9 +288,33 @@ class FunCall( Expr ) :
 
         return listToGetCarFrom.values[0].eval(nt,ft)
 
+    def cons( self, nt, ft ) :
+        '''Returns a new list, with element prepended to existing list'''
+        if not(len(self.argList) == 2) :
+            raise Exception("Cons function requires exactly 2 arguments")
+
+        atom = self.argList[0]
+        listToAddAtomTo = self.argList[1].eval(nt,ft)
+        copiedList = copy.deepcopy(listToAddAtomTo)
+
+        if not(isinstance(copiedList,List)) :
+            raise Exception("Can only cons an atom onto a List")
+
+        # Check if enough memory exists to add atom; if not, run GC
+        if(globalHeap.hasSpace()):
+            globalHeap.add(atom)
+        # Not yet fully implemented
+        #else :
+            #globalHeap.collectGarbage()      
+
+        copiedList.addToHead(atom)
+        return copiedList
+
     def eval( self, nt, ft ) :
         if (self.name == "car") :
             return self.car(nt,ft)
+        elif(self.name == "cons") :
+            return self.cons(nt,ft)
         else :
             return ft[ self.name ].apply( nt, ft, self.argList )
 
@@ -426,7 +498,8 @@ class Program :
         self.stmtList = stmtList
         self.nameTable = {}
         self.funcTable = {}
-    
+        print("Assigned runningProgram to self")   
+ 
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable )
     
@@ -446,3 +519,7 @@ class Program :
         print "%sPROGRAM :" % (tabstop*depth)
         self.stmtList.display( self.nameTable, self.funcTable )
 
+    # A helper method that can be used to force garbage collection even before heap is full
+    def collectGarbage( self ) :
+        print("TODO")
+        #globalHeap.collectGarbage()
