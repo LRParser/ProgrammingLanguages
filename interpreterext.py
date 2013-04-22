@@ -48,8 +48,7 @@ tokens = (
         'END',
         'IDENT',
         'LEFTBRACKET',
-        'RIGHTBRACKET',
-        'LISTCONCATENATOR'
+        'RIGHTBRACKET'
 )
         # These are all caught in the IDENT rule, typed there.
 reserved = {
@@ -82,7 +81,6 @@ t_SEMICOLON = r';'
 t_COMMA         = r','
 t_LEFTBRACKET = r'\['
 t_RIGHTBRACKET = r'\]'
-t_LISTCONCATENATOR = r'\|\|'
 
 def t_IDENT( t ):
         #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -127,9 +125,6 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
-    print "Running garbage collector"
-    P.collectGarbage()
-    print "Garbage collector run"
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list
@@ -149,14 +144,6 @@ def p_stmt( p ) :
     p[0] = p[1]
 
 # List parsing rules #
-
-def p_list_list_LISTCONCATENATOR_list(p):
-    'list : list LISTCONCATENATOR list'
-    print("p_list_list_LISTCONCATENATOR list")
-    s0 = Sequence(p[3])
-    s1 = Sequence(p[1],s0)
-    p[0] = List(s1)
-
 def p_list_leftbracket_sequence_rightbracket(p):
     'list : LEFTBRACKET sequence RIGHTBRACKET'
     print("p_list_leftbracket_sequence_rightbracket")
@@ -226,7 +213,7 @@ def p_term_fact( p ) :
 
 def p_fact_NUM( p ) :
     'fact : NUMBER'
-    print("p_fact_NUM")
+    print("p_fact_NUMBER")
     p[0] = Number(p[1])
 
 def p_fact_expr( p ) :
