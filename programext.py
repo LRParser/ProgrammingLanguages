@@ -158,11 +158,7 @@ class List( Element ) :
 
     def eval( self, nt, ft, gh ) :
         if(self.sequence is not None) :
-            retList = list()
-            for val in self.sequence.eval(nt,ft,gh) :
-                print(val)
-                retList.append(val)
-            return retList
+            return list(self.sequence.eval(nt,ft,gh))
         else :
             return list()
 
@@ -269,6 +265,38 @@ class Minus( Expr ) :
         self.rhs.display( nt, ft, depth+1 )
         #print "%s= %i" % (tabstop*depth, self.eval( nt, ft ))
 
+class Concat( Expr ) :
+    '''expression for list concatenation'''
+
+    def __init__( self, lhs, rhs ) :
+        self.lhs = lhs
+        self.rhs = rhs
+
+    def eval( self, nt, ft, gh ) :
+        lhsEval = self.lhs.eval(nt,ft,gh)
+        rhsEval = self.rhs.eval(nt,ft,gh)
+        if(not isinstance(lhsEval,List) or not isinstance(rhsEval,List)) :
+            raise Exception("Both elements applied for List concatenation using || operator must be lists")
+        lhsListEval = lhsEval.eval(nt,ft,gh)
+        print("lhsListEval")
+        print(lhsListEval)
+        rhsListEval = rhsEval.eval(nt,ft,gh)
+        print("rhsListEval")
+        print(rhsListEval)
+        extendedList = lhsListEval.extend(rhsListEval)
+        print("Extended")
+        print(extendedList)
+        return extendedList
+        #leftSeq = lhsEval.sequence
+        #rightSeq = rhsEval.sequence
+        #joinedSeq = Sequence(leftSeq,rightSeq)
+        #newList = List(joinedSeq)
+        #return newList.eval(nt,ft,gh)
+
+    def display( self, nt, ft, depth=0 ) :
+        print "%sCONCAT" % (tabstop*depth)
+        self.lhs.display( nt, ft, depth+1 )
+        self.rhs.display( nt, ft, depth+1 )
 
 class FunCall( Expr ) :
     '''stores a function call:
@@ -295,6 +323,7 @@ class FunCall( Expr ) :
             raise Exception("Cons function requires exactly 2 arguments")
 
         atom = self.argList[0]
+        evalAtom = atom.eval(nt,ft,gh)
         listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
         print("atom is: "+str(atom))
         print("listToAddAtomTo is: "+str(listToAddAtomTo))
@@ -309,7 +338,7 @@ class FunCall( Expr ) :
                 wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
             else :
                 wrapSeq = Sequence(sourceSeq.element)
-            newSeq = Sequence(atom,wrapSeq) 
+            newSeq = Sequence(evalAtom,wrapSeq) 
             newList = List(newSeq)
             print("Created list: "+str(newList))
             gh.add(newList)

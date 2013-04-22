@@ -150,12 +150,10 @@ def p_stmt( p ) :
 
 # List parsing rules #
 
-def p_list_list_LISTCONCATENATOR_list(p):
-    'list : list LISTCONCATENATOR list'
-    print("p_list_list_LISTCONCATENATOR list")
-    s0 = Sequence(p[3])
-    s1 = Sequence(p[1],s0)
-    p[0] = List(s1)
+def p_list_element_LISTCONCATENATOR_element(p):
+    'list : element LISTCONCATENATOR element'
+    print("p_list_element_LISTCONCATENATOR element")
+    p[0] = Concat(p[1],p[3])
 
 def p_list_leftbracket_sequence_rightbracket(p):
     'list : LEFTBRACKET sequence RIGHTBRACKET'
