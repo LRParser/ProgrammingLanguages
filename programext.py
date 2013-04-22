@@ -56,6 +56,40 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
+######   GARBAGE COLLECTION ########
+
+class Heap :
+
+    def __init__( self, nt, maxSize=100 ) :
+        self.heap = list()
+        self.nt = nt
+        self.maxSize = maxSize
+
+    def hasSpace( self ) :
+        return (len(self.heap)<self.maxSize)
+
+    def add ( self, val ) :
+        if(self.hasSpace()):
+            self.heap.append(val)
+        else :
+            raise Exception('Heap is full')
+
+    def collectGarbage(self, nt, ft, gh) :
+        for name in nt :
+            val = nt[name]
+            if(isinstance(val,List)) :
+                print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
+                val.mark(nt, ft, gh)
+            elif(isinstance(val,Number)) :
+                print("Marking number: " + str(val) + "identified by: "+name+ "so as to not be collected")
+        for val in self.heap :
+            if(isinstance(val,List) and (not val.marked)) :
+                print("Freeing unreferenced List: "+str(val))
+                self.heap.remove(val)
+            elif(isinstance(val,Number) and (not val.marked)) :
+                print("Freeing unreferenced Number: "+str(val))
+                self.heap.remove(val)
+
 ######   CLASSES   ##################
 
 class Expr :
@@ -65,7 +99,7 @@ class Expr :
         raise NotImplementedError(
             'Expr: pure virtual base class.  Do not instantiate' )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         '''Given an environment and a function table, evaluates the expression,
         returns the value of the expression (an int in this grammar)'''
 
@@ -82,9 +116,15 @@ class Element( Expr ) :
     def __init__( self, v=0 ) :
         print("Element ctor")
         self.value = v
+        self.marked = False
 
-    def eval( self, nt, ft ) :
-        return self.value.eval(nt,ft)
+    def eval( self, nt, ft, gh ) :
+        if(isinstance(self,List)) :
+            return self
+        elif(isinstance(self,Number)) :
+            return self.value.eval(nt,ft, gh)
+        else :
+            raise Exception("Element should only be a List or Number")
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
@@ -94,8 +134,9 @@ class Number( Element ) :
 
     def __init__( self, v=0 ) :
         self.value = v
+        self.marked = False
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         return self.value
 
     def display( self, nt, ft, depth=0 ) :
@@ -104,25 +145,44 @@ class Number( Element ) :
 class List( Element ) :
 
     def __init__( self, s=None ) :
-        self.values = list()
-        if(s is not None):
-            if (isinstance(s,Sequence)) :
-                # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
-                for val in s.values :
-                    self.values.append(val)
-            else :
-                self.values.append(s)
-
-    def eval( self, nt, ft ) :
-
-        evaledList = copy.deepcopy(self.values)
-        for i in xrange(len(evaledList)) :
-            evaledList[i] = evaledList[i].eval(nt,ft)
-        return evaledList
+        self.sequence = s
+        self.marked = False
 
     def display( self, nt, ft, depth=0 ) :
-        for val in self.values :
-            val.display(nt,ft,depth+1)
+        if(self.sequence is not None) :
+            self.sequence.display(nt,ft,depth+1)
+
+    def addToHead( self, val ) :
+        print("Adding: "+str(val))
+        self.values.insert(0,val)
+
+    def eval( self, nt, ft, gh ) :
+        if(self.sequence is not None) :
+            retList = list()
+            for val in self.sequence.eval(nt,ft,gh) :
+                print(val)
+                retList.append(val)
+            return retList
+        else :
+            return list()
+
+    def successorLists( self, nt, ft, gh ) :
+        retVal = list()
+        for val in self.sequence.eval(nt,ft,gh) :
+            if (isinstance(val,List)) :
+                retVal.append(val)
+        return retVal
+
+    # Recursively mark this list and any sub-lists as still being referenced
+    def mark(self, nt, ft, gh) :
+        if not (self.marked):
+            self.marked = True
+            successorLists = self.successorLists(nt, ft, gh)
+            if (successorLists is not None) :
+                for val in successorLists:
+                    if not (val.marked):
+                        print("Marking successor")
+                        mark(val)
 
     def __repr__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
@@ -134,31 +194,20 @@ class List( Element ) :
 class Sequence( Expr ) :
 
     def __init__( self, e, s=None ) :
-        self.values = list()
-        self.insertHead(e)
-        if(s is not None):
-            self.appendTail(s)
+        self.element = e
+        self.sequence = s
 
-    def insertHead( self , e ) :
-        self.values.insert(0,e)
-
-    def appendTail ( self, e ) :
-        self.values.append(e)
-
-    def eval( self, nt, ft ) :
-        evaledSeq = list()
-        for val in self.values :
-            evaledSeq.append(val.eval(nt,ft))
-        return evaledSeq
-        #for val in self.values :
-        #    yield val.eval(nt,ft)
+    def eval( self, nt, ft, gh ) :
+        seq = self
+        while(seq is not None) :
+            print(str(seq))
+            yield seq.element.eval(nt,ft,gh)
+            seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
-        if self.values is not None :
-            for val in self.values :
-                val.display(nt, ft, depth)
-        else :
-            print("Empty")
+        self.element.display(nt,ft,depth)
+        if(self.sequence is not None):
+            self.sequence.display(nt,ft,depth)
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -166,7 +215,7 @@ class Ident( Expr ) :
     def __init__( self, name ) :
         self.name = name
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         return nt[ self.name ]
 
     def display( self, nt, ft, depth=0 ) :
@@ -184,8 +233,8 @@ class Times( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) * self.rhs.eval( nt, ft )
+    def eval( self, nt, ft, gh ) :
+        return self.lhs.eval( nt, ft, gh ) * self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sMULT" % (tabstop*depth)
@@ -201,8 +250,8 @@ class Plus( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) + self.rhs.eval( nt, ft )
+    def eval( self, nt, ft, gh ) :
+        return self.lhs.eval( nt, ft, gh ) + self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sADD" % (tabstop*depth)
@@ -218,8 +267,8 @@ class Minus( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) - self.rhs.eval( nt, ft )
+    def eval( self, nt, ft, gh ) :
+        return self.lhs.eval( nt, ft, gh ) - self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sSUB" % (tabstop*depth)
@@ -240,22 +289,51 @@ class FunCall( Expr ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
 
-        listToGetCarFrom = self.argList[0].eval(nt,ft)
+        listToGetCarFrom = self.argList[0].eval(nt,ft, gh)
 
         if not(isinstance(listToGetCarFrom,List)) :
             raise Exception("Can only call car on List")
 
-        return listToGetCarFrom.values[0].eval(nt,ft)
+        return listToGetCarFrom.values[0].eval(nt,ft, gh)
 
-    def eval( self, nt, ft ) :
-        func = getattr(self, self.name, None)
-        # Is this function defined in this class?
-        if func:
-            # It is, so call it (like car, cdr, etc...)
-            return func(nt,ft)
-        # Otherwise, call the function from the function table
+    def cons( self, nt, ft, gh ) :
+        '''Returns a new list, with element prepended to existing list'''
+        if not(len(self.argList) == 2) :
+            raise Exception("Cons function requires exactly 2 arguments")
+
+        atom = self.argList[0]
+        listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
+        print("atom is: "+str(atom))
+        print("listToAddAtomTo is: "+str(listToAddAtomTo))
+
+        if not(isinstance(listToAddAtomTo,List)) :
+            raise Exception("Can only cons an atom onto a List")
+
+        # Check if we have space to copy the passed list; if not, run GC
+        if(gh.hasSpace()):
+            sourceSeq = listToAddAtomTo.sequence
+            if(sourceSeq.sequence is not None) :
+                wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
+            else :
+                wrapSeq = Sequence(sourceSeq.element)
+            newSeq = Sequence(atom,wrapSeq)
+            newList = List(newSeq)
+            print("Created list: "+str(newList))
+            gh.add(newList)
         else :
-            return ft[ self.name ].apply( nt, ft, self.argList )
+            gh.collectGarbage(nt,ft,gh)
+
+        # Note: Only GC'ing creating lists for now, need to investigate what other GC scenarios exist
+
+        return newList
+
+    def eval( self, nt, ft, gh ) :
+        if (self.name == "car") :
+            return self.car(nt,ft, gh)
+        elif(self.name == "cons") :
+            return self.cons(nt,ft, gh)
+        else :
+            return ft[ self.name ].apply( nt, ft, self.argList, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
@@ -272,7 +350,7 @@ class Stmt :
         raise NotImplementedError(
             'Stmt: pure virtual base class.  Do not instantiate' )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         '''Given an environment and a function table, evaluates the expression,
         returns the value of the expression (an int in this grammar)'''
 
@@ -294,12 +372,12 @@ class AssignStmt( Stmt ) :
         self.name = name
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        if(isinstance(self.rhs.eval(nt,ft),list)) :
-            # We shouldn't eval the list at assignment time, per instructions
+    def eval( self, nt, ft, gh ) :
+        if(isinstance(self.rhs,List)) :
+            # Lists aren't eval'd at assignment time; the values might change. Members are only evalued when we car an item off and eval it
             nt[ self.name ] = self.rhs
         else :
-            nt[ self.name ] = self.rhs.eval( nt, ft )
+            nt[ self.name ] = self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -313,7 +391,7 @@ class DefineStmt( Stmt ) :
         self.name = name
         self.proc = proc
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         ft[ self.name ] = self.proc
 
     def display( self, nt, ft, depth=0 ) :
@@ -333,11 +411,11 @@ class IfStmt( Stmt ) :
         self.tBody = tBody
         self.fBody = fBody
 
-    def eval( self, nt, ft ) :
-        if self.cond.eval( nt, ft ) > 0 :
-            self.tBody.eval( nt, ft )
+    def eval( self, nt, ft, gh ) :
+        if self.cond.eval( nt, ft, gh ) > 0 :
+            self.tBody.eval( nt, ft, gh )
         else :
-            self.fBody.eval( nt, ft )
+            self.fBody.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sIF" % (tabstop*depth)
@@ -354,9 +432,9 @@ class WhileStmt( Stmt ) :
         self.cond = cond
         self.body = body
 
-    def eval( self, nt, ft ) :
-        while self.cond.eval( nt, ft ) > 0 :
-            self.body.eval( nt, ft )
+    def eval( self, nt, ft, gh ) :
+        while self.cond.eval( nt, ft, gh ) > 0 :
+            self.body.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sWHILE" % (tabstop*depth)
@@ -375,9 +453,9 @@ class StmtList :
     def insert( self, stmt ) :
         self.sl.insert( 0, stmt )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         for s in self.sl :
-            s.eval( nt, ft )
+            s.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
@@ -402,7 +480,7 @@ class Proc :
         self.parList = paramList
         self.body = body
 
-    def apply( self, nt, ft, args ) :
+    def apply( self, nt, ft, args, gh ) :
         newContext = {}
 
         # sanity check, # of args
@@ -413,13 +491,13 @@ class Proc :
         # bind parameters in new name table (the only things there right now)
             # use zip, bastard
         for i in range( len( args )) :
-            newContext[ self.parList[i] ] = args[i].eval( nt, ft )
+            newContext[ self.parList[i] ] = args[i].eval( nt, ft, gh )
 
         # evaluate the function body using the new name table and the old (only)
         # function table.  Note that the proc's return value is stored as
         # 'return in its nametable
 
-        self.body.eval( newContext, ft )
+        self.body.eval( newContext, ft, gh )
         if newContext.has_key( returnSymbol ) :
             return newContext[ returnSymbol ]
         else :
@@ -437,16 +515,17 @@ class Program :
         self.stmtList = stmtList
         self.nameTable = {}
         self.funcTable = {}
+        self.globalHeap = Heap(self.nameTable,100)
 
     def eval( self ) :
-        self.stmtList.eval( self.nameTable, self.funcTable )
+        self.stmtList.eval( self.nameTable, self.funcTable,self.globalHeap )
 
     def dump( self ) :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],List)):
-                print("Print List")
-                print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
+                print(str(k))
+                self.nameTable[k].display(self.nameTable,self.funcTable, 0)
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"
@@ -456,3 +535,7 @@ class Program :
     def display( self, depth=0 ) :
         print "%sPROGRAM :" % (tabstop*depth)
         self.stmtList.display( self.nameTable, self.funcTable )
+
+    # A helper method that can be used to force garbage collection even before heap is full
+    def collectGarbage( self ) :
+        self.globalHeap.collectGarbage(self.nameTable,self.funcTable,self.globalHeap)
