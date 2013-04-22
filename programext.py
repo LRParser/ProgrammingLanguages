@@ -193,6 +193,7 @@ class Sequence( Expr ) :
     def eval( self, nt, ft, gh ) :
         seq = self
         while(seq is not None) :
+            print(str(seq))
             yield seq.element.eval(nt,ft,gh)
             seq = seq.sequence
 

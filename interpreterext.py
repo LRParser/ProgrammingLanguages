@@ -48,7 +48,8 @@ tokens = (
         'END',
         'IDENT',
         'LEFTBRACKET',
-        'RIGHTBRACKET'
+        'RIGHTBRACKET',
+        'LISTCONCATENATOR'
 )
         # These are all caught in the IDENT rule, typed there.
 reserved = {
@@ -81,6 +82,7 @@ t_SEMICOLON = r';'
 t_COMMA         = r','
 t_LEFTBRACKET = r'\['
 t_RIGHTBRACKET = r'\]'
+t_LISTCONCATENATOR = r'\|\|'
 
 def t_IDENT( t ):
         #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -147,6 +149,14 @@ def p_stmt( p ) :
     p[0] = p[1]
 
 # List parsing rules #
+
+def p_list_list_LISTCONCATENATOR_list(p):
+    'list : list LISTCONCATENATOR list'
+    print("p_list_list_LISTCONCATENATOR list")
+    s0 = Sequence(p[3])
+    s1 = Sequence(p[1],s0)
+    p[0] = List(s1)
+
 def p_list_leftbracket_sequence_rightbracket(p):
     'list : LEFTBRACKET sequence RIGHTBRACKET'
     print("p_list_leftbracket_sequence_rightbracket")
