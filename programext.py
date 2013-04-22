@@ -189,7 +189,7 @@ class List( Element ) :
         the memory addr, which doesn't work out so well when trying to compare
         test results.
         '''
-        return "List with %d elements" % len(self.values)
+        return "List with sequence "
 
 class Sequence( Expr ) :
 
