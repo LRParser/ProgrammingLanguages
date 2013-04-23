@@ -27,3 +27,7 @@ j := cons(0,l);
 j := 5
 
 Then, both the 0 and the new list returned by cons are GC'd, when GC runs
+
+Runtime list concat:
+
+python interpretext < ./SampleInput/listConcat.p

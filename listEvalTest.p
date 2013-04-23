@@ -1,5 +1,5 @@
-from ../interpreterext import *
-from ../programext import *
+from interpreterext import *
+from programext import *
 
 n1 = Number(1)
 n2 = Number(2)

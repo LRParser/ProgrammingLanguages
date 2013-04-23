@@ -283,20 +283,35 @@ class Concat( Expr ) :
         rhsListEval = rhsEval.eval(nt,ft,gh)
         print("rhsListEval")
         print(rhsListEval)
-        extendedList = lhsListEval.extend(rhsListEval)
+        extendedList = lhsListEval + rhsListEval
         print("Extended")
         print(extendedList)
-        return extendedList
-        #leftSeq = lhsEval.sequence
-        #rightSeq = rhsEval.sequence
-        #joinedSeq = Sequence(leftSeq,rightSeq)
-        #newList = List(joinedSeq)
-        #return newList.eval(nt,ft,gh)
+        print(len(extendedList))
+        return self.pythonListToList(extendedList)
 
     def display( self, nt, ft, depth=0 ) :
         print "%sCONCAT" % (tabstop*depth)
         self.lhs.display( nt, ft, depth+1 )
         self.rhs.display( nt, ft, depth+1 )
+
+    def pythonListToList(self, inputList):
+        listLen = len(inputList)
+        
+        outerSeq = None
+        i = 0
+        while( i < listLen) :
+            print(str(i))
+            val = inputList[i]
+            currentNum = Number(val)
+            innerSeq = Sequence(currentNum)
+            if(outerSeq is not None) :
+                outerSeq = Sequence(outerSeq,innerSeq)
+            else :
+                outerSeq = Sequence(innerSeq)
+            i = (i+1)
+        createdList = List(outerSeq)
+        return createdList
+
 
 class FunCall( Expr ) :
     '''stores a function call:
