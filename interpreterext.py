@@ -196,8 +196,8 @@ def p_sub( p ) :
     p[0] = Minus( p[1], p[3] )
 
 def p_expr_list( p ) :
-    '''expr_list : expr COMMA expr_list
-                | expr'''
+    '''expr_list : element COMMA expr_list
+                | element'''
     print("p_expr_list")
     if len( p ) == 2 :  # single expr => new list
         p[0] = [ p[1] ]

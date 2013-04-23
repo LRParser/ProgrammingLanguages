@@ -325,18 +325,47 @@ class FunCall( Expr ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
 
-        listToGetCarFrom = self.argList[0].eval(nt,ft, gh)
-        
-        if not(isinstance(listToGetCarFrom,List)) :
+        listArg = self.argList[0]
+        listPassed = None
+        if(isinstance(listArg,Ident)) :
+            # We were passed an Ident
+            listPassed = self.argList[0].eval(nt,ft, gh)
+        elif(isinstance(listArg,List)) :
+            # We were passed a List ojbect
+            listPassed = listArg
+
+        if not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
         
         # We have a parsed List object. Call eval to get a native list
-        evaledList = listToGetCarFrom.eval(nt,ft,gh)
+        evaledList = listPassed.eval(nt,ft,gh)
 
-        if(len(evaledList < 1)) :
+        if(len(evaledList) < 1) :
             raise Exception("Can't call car on empty List")
 
         return evaledList[0]
+
+    def cdr( self, nt, ft, gh ) :
+        
+        listArg = self.argList[0]
+        listPassed = None
+        if(isinstance(listArg,Ident)) :
+            # We were passed an Ident
+            listPassed = self.argList[0].eval(nt,ft, gh)
+        elif(isinstance(listArg,List)) :
+            # We were passed a List ojbect
+            listPassed = listArg
+
+        if not(isinstance(listPassed,List)) :
+            raise Exception("Can only call cdr on List")
+
+        # We have a parsed List object. Call eval to get a native list
+        evaledList = listPassed.eval(nt,ft,gh)
+
+        if(len(evaledList) < 1) :
+            raise Exception("Can't call car on empty List")
+
+        return evaledList[1:]
 
     def cons( self, nt, ft, gh ) :
         '''Returns a new list, with element prepended to existing list'''
@@ -375,6 +404,8 @@ class FunCall( Expr ) :
             return self.car(nt,ft, gh)
         elif(self.name == "cons") :
             return self.cons(nt,ft, gh)
+        elif(self.name == "cdr") :
+            return self.cdr(nt,ft, gh)
         else :
             return ft[ self.name ].apply( nt, ft, self.argList, gh )
 
