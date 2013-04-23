@@ -321,7 +321,7 @@ class FunCall( Expr ) :
         self.name = name
         self.argList = argList
     
-    def car( self, nt, ft ) :
+    def car( self, nt, ft, gh ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
 
@@ -329,8 +329,14 @@ class FunCall( Expr ) :
         
         if not(isinstance(listToGetCarFrom,List)) :
             raise Exception("Can only call car on List")
+        
+        # We have a parsed List object. Call eval to get a native list
+        evaledList = listToGetCarFrom.eval(nt,ft,gh)
 
-        return listToGetCarFrom.values[0].eval(nt,ft, gh)
+        if(len(evaledList < 1)) :
+            raise Exception("Can't call car on empty List")
+
+        return evaledList[0]
 
     def cons( self, nt, ft, gh ) :
         '''Returns a new list, with element prepended to existing list'''
@@ -561,8 +567,8 @@ class Program :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             if(isinstance(self.nameTable[k],List)):
-                print(str(k))
-                self.nameTable[k].display(self.nameTable,self.funcTable, 0)
+                print "  %s -> " % str(k)
+                self.nameTable[k].display(self.nameTable,self.funcTable, 1)
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
         print "Function Table"
