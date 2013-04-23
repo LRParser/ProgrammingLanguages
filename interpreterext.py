@@ -47,8 +47,8 @@ tokens = (
         'PROC',
         'END',
         'IDENT',
-        'LEFTBRACKET',
-        'RIGHTBRACKET',
+        'LBRACKET',
+        'RBRACKET',
         'LISTCONCATENATOR'
 )
         # These are all caught in the IDENT rule, typed there.
@@ -80,8 +80,8 @@ t_RPAREN        = r'\)'
 t_ASSIGNOP = r':='
 t_SEMICOLON = r';'
 t_COMMA         = r','
-t_LEFTBRACKET = r'\['
-t_RIGHTBRACKET = r'\]'
+t_LBRACKET = r'\['
+t_RBRACKET = r'\]'
 t_LISTCONCATENATOR = r'\|\|'
 
 def t_IDENT( t ):
@@ -155,13 +155,13 @@ def p_list_element_LISTCONCATENATOR_element(p):
     print("p_list_element_LISTCONCATENATOR element")
     p[0] = Concat(p[1],p[3])
 
-def p_list_leftbracket_sequence_rightbracket(p):
-    'list : LEFTBRACKET sequence RIGHTBRACKET'
-    print("p_list_leftbracket_sequence_rightbracket")
+def p_list_lbracket_sequence_rbracket(p):
+    'list : LBRACKET sequence RBRACKET'
+    print("p_list_lbracket_sequence_rbracket")
     p[0] = List(p[2])
 
 def p_list_leftparen_rightparen(p):
-    'list : LEFTBRACKET RIGHTBRACKET'
+    'list : LBRACKET RBRACKET'
     print("p_list_leftparen_rightparen")
     p[0] = List()
 
