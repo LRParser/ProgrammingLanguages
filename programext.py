@@ -378,6 +378,41 @@ class FunCall( Expr ):
 
         return evaledList[1:]
 
+    def nullp( self, nt, ft ):
+        'Returns 1 if the List is Null, otherwise 0'
+
+        try:
+            the_list = self.argList[0].eval(nt,ft).eval(nt,ft);
+        except:
+            #It's not a list, so therefore, it's not null
+            return 0;
+        else:
+            if not the_list:
+                return 1
+            else:
+                return 0
+
+    def listp( self, nt, ft ):
+        "Returns 1 if a list, otherwise 0"
+
+        try:
+            if isinstance(self.argList[0].eval(nt,ft), List):
+                return 1
+            else:
+                return 0
+        except:
+            return 0
+
+    def intp( self, nt, ft ):
+        "Returns 1 if it is Number, otherwise 0"
+
+        try:
+            if isinstance(self.argList[0], Number):
+                return 1
+            else:
+                return 0
+        except:
+            return 0
 
     def cons( self, nt, ft, gh ) :
         '''Returns a new list, with element prepended to existing list'''
