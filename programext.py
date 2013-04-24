@@ -60,17 +60,17 @@ tabstop = '  ' # 2 spaces
 
 class Heap :
 
-    def __init__( self, nt, maxSize=100 ) :
-        self.heap = list()
-        self.nt = nt
+    def __init__( self, maxSize=100 ) :
+        self.cellHeap = set()
         self.maxSize = maxSize
 
     def hasSpace( self ) :
-        return (len(self.heap)<self.maxSize)
+        return (len(self.cellHeap)<self.maxSize)
 
     def add ( self, val ) :
         if(self.hasSpace()):
-            self.heap.append(val)
+            print("Adding to heap: "+str(val))
+            self.cellHeap.add(val)
         else :
             raise Exception('Heap is full')
 
@@ -80,16 +80,20 @@ class Heap :
             if(isinstance(val,List)) :
                 print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
                 val.mark(nt, ft, gh)
-            elif(isinstance(val,Number)) :
-                print("Marking number: " + str(val) + "identified by: "+name+ "so as to not be collected")
-        for val in self.heap :
+
+        itemsToRemove = set()
+        for val in self.cellHeap :
+            print("Found in heap: "+str(val))
             if(isinstance(val,List) and (not val.marked)) :
                 print("Freeing unreferenced List: "+str(val))
-                self.heap.remove(val)
+                itemsToRemove.add(val)
             elif(isinstance(val,Number) and (not val.marked)) :
                 print("Freeing unreferenced Number: "+str(val))
-                self.heap.remove(val)
-            
+                itemsToRemove.add(val)
+
+        # Sweep
+        for val in itemsToRemove :
+            self.cellHeap.discard(val)
 ######   CLASSES   ##################
 
 class Expr :
@@ -156,11 +160,17 @@ class List( Element ) :
         print("Adding: "+str(val))
         self.values.insert(0,val)
 
+    def registerWithHeap(self,globalHeap) :
+        globalHeap.add(self)
+
     def eval( self, nt, ft, gh ) :
         if(self.sequence is not None) :
             return list(self.sequence.eval(nt,ft,gh))
         else :
             return list()
+
+    def numberIterator( self ) :
+        return self.sequence.numberIterator()
 
     def successorLists( self, nt, ft, gh ) :
         retVal = list()
@@ -172,7 +182,12 @@ class List( Element ) :
     # Recursively mark this list and any sub-lists as still being referenced
     def mark(self, nt, ft, gh) :
         if not (self.marked):
+            # First, mark all contained cells/Numbers in list
+            for nVal in self.numberIterator() :
+                nVal.marked = True
+            # Then mark the List/List pointer itself
             self.marked = True
+            # Then mark any nested lists
             successorLists = self.successorLists(nt, ft, gh)
             if (successorLists is not None) :
                 for val in successorLists:
@@ -191,6 +206,12 @@ class Sequence( Expr ) :
         while(seq is not None) :
             print(str(seq))
             yield seq.element.eval(nt,ft,gh)
+            seq = seq.sequence
+
+    def numberIterator( self ) :
+        seq = self
+        while(seq is not None) :
+            yield seq.element
             seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
@@ -382,18 +403,19 @@ class FunCall( Expr ) :
             raise Exception("Can only cons an atom onto a List")
 
         # Check if we have space to copy the passed list; if not, run GC
-        if(gh.hasSpace()):
-            sourceSeq = listToAddAtomTo.sequence
-            if(sourceSeq.sequence is not None) :
-                wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
-            else :
-                wrapSeq = Sequence(sourceSeq.element)
-            newSeq = Sequence(evalAtom,wrapSeq) 
-            newList = List(newSeq)
-            print("Created list: "+str(newList))
-            gh.add(newList)
+        sourceSeq = listToAddAtomTo.sequence
+        if(sourceSeq.sequence is not None) :
+            wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
         else :
-            gh.collectGarbage(nt,ft,gh)
+            wrapSeq = Sequence(sourceSeq.element)
+        newSeq = Sequence(evalAtom,wrapSeq) 
+        newList = List(newSeq)
+        print("Created list: "+str(newList))
+        # Add the list pointer to the heap
+        gh.add(newList)
+        # Add the contents of list to the heap
+        for nVal in newList.numberIterator() :
+            gh.add(nVal)
 
         # Note: Only GC'ing creating lists for now, need to investigate what other GC scenarios exist
 
@@ -585,11 +607,11 @@ class Proc :
 
 class Program :
     
-    def __init__( self, stmtList ) :
+    def __init__( self, stmtList, heap ) :
         self.stmtList = stmtList
         self.nameTable = {}
         self.funcTable = {}
-        self.globalHeap = Heap(self.nameTable,100)
+        self.globalHeap = heap
  
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable,self.globalHeap )

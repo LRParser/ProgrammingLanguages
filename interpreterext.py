@@ -120,9 +120,11 @@ import ply.yacc as yacc
     # create a function for each production (note the prefix)
     # The rule is given in the doc string
 
+globalHeap = Heap(100)
+
 def p_program( p ) :
     'program : stmt_list'
-    P = Program( p[1] )
+    P = Program( p[1],globalHeap )
     P.display()
     print 'Running Program'
     P.eval()
@@ -159,12 +161,12 @@ def p_list_lbracket_sequence_rbracket(p):
     'list : LBRACKET sequence RBRACKET'
     print("p_list_lbracket_sequence_rbracket")
     p[0] = List(p[2])
-
+    p[0].registerWithHeap(globalHeap)
 def p_list_leftparen_rightparen(p):
     'list : LBRACKET RBRACKET'
     print("p_list_leftparen_rightparen")
     p[0] = List()
-
+    p[0].registerWithHeap(globalHeap)
 def p_sequence_element_comma_sequence(p):
     'sequence : element COMMA sequence'
     print("p_sequence_element_comma_sequence")
