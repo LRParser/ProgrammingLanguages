@@ -61,7 +61,8 @@ tabstop = '  ' # 2 spaces
 class Heap :
 
     def __init__( self, maxSize=100 ) :
-        self.cellHeap = set()
+        self.cellHeap = list()
+        self.cellInUseCount = 0
         self.maxSize = maxSize
 
     def hasSpace( self ) :
@@ -70,11 +71,20 @@ class Heap :
     def add ( self, val ) :
         if(self.hasSpace()):
             print("Adding to heap: "+str(val))
-            self.cellHeap.add(val)
+            self.cellHeap.append(val)
+            if(not isinstance(val,List)) :
+                raise Exception("Can only add lists to heap")
+            flattenedLength = val.flattenedLength(None,None,None) # No args needed since lists don't need to be able to store vars/exprs; leaving in until prof. decides if this is extra credit or not
+            print("Flattened length is: "+str(flattenedLength))
+            self.cellInUseCount = self.cellInUseCount + flattenedLength
+            print("Cell in use count is: "+str(self.cellInUseCount))
+                # Get length of list, and register at least this number of cells as being in use
+                
         else :
             raise Exception('Heap is full')
 
     def collectGarbage(self, nt, ft, gh) :
+        print("Cells in use at start of GC: "+str(self.cellInUseCount))
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
@@ -93,7 +103,12 @@ class Heap :
 
         # Sweep
         for val in itemsToRemove :
-            self.cellHeap.discard(val)
+            listCellCount = val.flattenedLength(None,None,None)
+            self.cellInUseCount = self.cellInUseCount - listCellCount
+            self.cellHeap.remove(val)
+        
+        print("Cells in use at end of GC: "+str(self.cellInUseCount))
+
 ######   CLASSES   ##################
 
 class Expr :
@@ -179,6 +194,10 @@ class List( Element ) :
                 retVal.append(val)
         return retVal
 
+    def flattenedLength( self, nt, ft, gh ) :
+        iterable = self.sequence.eval(nt,ft,gh)
+        return len(list(self.numberIterator()))
+
     # Recursively mark this list and any sub-lists as still being referenced
     def mark(self, nt, ft, gh) :
         if not (self.marked):
@@ -211,7 +230,10 @@ class Sequence( Expr ) :
     def numberIterator( self ) :
         seq = self
         while(seq is not None) :
-            yield seq.element
+            if(isinstance(seq.element,Number)) :
+                yield seq.element
+            else :
+                yield seq.numberIterator()
             seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
@@ -323,8 +345,12 @@ class Concat( Expr ) :
         while( i < listLen) :
             print(str(i))
             val = inputList[i]
-            currentNum = Number(val)
-            innerSeq = Sequence(currentNum)
+            currentElem = None
+            if(isinstance(val,Number)) :
+                currentElem = Number(val)
+            elif(isinstance(val,List)) :
+                currentElem = pythonListToList(inputList)
+            innerSeq = Sequence(currentElem)
             if(outerSeq is not None) :
                 outerSeq = Sequence(outerSeq,innerSeq)
             else :
