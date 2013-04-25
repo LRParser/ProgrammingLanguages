@@ -93,7 +93,7 @@ class Heap :
             raise Exception('Heap is full')
 
     def collectGarbage(self, nt, ft, gh) :
-        print("Cells in use at start of GC: "+str(self.cellInUseCount))
+        log.debug("Cells in use at start of GC: "+str(self.cellInUseCount))
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
@@ -251,11 +251,12 @@ class Sequence( Expr ) :
             if(isinstance(seq.element,Number)) :
                 yield seq.element
             else :
-                yield seq.numberIterator()
+                seq.numberIterator()
             seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
-        self.element.display(nt,ft,depth)
+        if(self.element is not None):
+            self.element.display(nt,ft,depth)
         if(self.sequence is not None):
             self.sequence.display(nt,ft,depth)
 
@@ -368,23 +369,32 @@ class Concat( Expr ) :
     def pythonListToList(self, inputList):
         listLen = len(inputList)
 
+        log.debug("inputList: %s" % inputList)
         outerSeq = None
         i = 0
         while( i < listLen) :
             print(str(i))
             val = inputList[i]
+
             currentElem = None
-            if(isinstance(val,Number)) :
+
+            if(isinstance(val,Number) or isinstance(val,int)) :
                 currentElem = Number(val)
+
             elif(isinstance(val,List)) :
                 currentElem = pythonListToList(inputList)
+
             innerSeq = Sequence(currentElem)
+
             if(outerSeq is not None) :
                 outerSeq = Sequence(outerSeq,innerSeq)
             else :
                 outerSeq = Sequence(innerSeq)
             i = (i+1)
         createdList = List(outerSeq)
+
+        log.debug("Created List: %s" % createdList)
+
         return createdList
 
 
