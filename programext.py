@@ -399,26 +399,26 @@ class FunCall( Expr ):
         except:
             return 0
 
-    def cons( self, nt, ft, gh ) :
+    def cons( self, nt, ft ) :
         '''Returns a new list, with element prepended to existing list'''
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
 
         atom = self.argList[0]
-        evalAtom = atom.eval(nt,ft,gh)
-        listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
+        evalAtom = atom.eval(nt,ft)
+        listToAddAtomTo = self.argList[1].eval(nt,ft)
         print("atom is: "+str(atom))
         print("listToAddAtomTo is: "+str(listToAddAtomTo))
 
-        if not(isinstance(listToAddAtomTo,List)) :
+        if not(isinstance(listToAddAtomTo, list)) :
             raise Exception("Can only cons an atom onto a List")
 
         sourceSeq = listToAddAtomTo.sequence
         if(sourceSeq.sequence is not None) :
-            wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
+            wrapSeq = Sequence(sourceSeq.element, sourceSeq.sequence)
         else :
             wrapSeq = Sequence(sourceSeq.element)
-        newSeq = Sequence(evalAtom,wrapSeq)
+        newSeq = Sequence(evalAtom, wrapSeq)
         newList = List(newSeq)
         print("Created list: "+str(newList))
 
