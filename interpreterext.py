@@ -65,16 +65,16 @@ tokens = (
 
 # These are all caught in the IDENT rule, typed there.
 reserved = {
-    'while' : 'WHILE',
-    'do'    : 'DO',
-    'od'	: 'OD',
-    'if'	: 'IF',
-    'then'	: 'THEN',
-    'else'	: 'ELSE',
-    'fi'	: 'FI',
-    'define': 'DEFINE',
-    'proc'	: 'PROC',
-    'end'	: 'END'
+    'while'   : 'WHILE',
+    'do'      : 'DO',
+    'od'      : 'OD',
+    'if'      : 'IF',
+    'then'    : 'THEN',
+    'else'    : 'ELSE',
+    'fi'      : 'FI',
+    'define'  : 'DEFINE',
+    'proc'    : 'PROC',
+    'end'     : 'END'
 }
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -84,16 +84,16 @@ reserved = {
 t_ignore = ' \t'
 
 # These are the simple maps
-t_PLUS		    = r'\+'
-t_MINUS         = r'-'
-t_TIMES		    = r'\*'
-t_LPAREN	    = r'\('
-t_RPAREN	    = r'\)'
-t_ASSIGNOP      = r':='
-t_SEMICOLON     = r';'
-t_COMMA		    = r','
-t_LBRACKET   = r'\['
-t_RBRACKET  = r'\]'
+t_PLUS		   = r'\+'
+t_MINUS            = r'-'
+t_TIMES		   = r'\*'
+t_LPAREN	   = r'\('
+t_RPAREN	   = r'\)'
+t_ASSIGNOP         = r':='
+t_SEMICOLON        = r';'
+t_COMMA		   = r','
+t_LBRACKET         = r'\['
+t_RBRACKET         = r'\]'
 t_LISTCONCATENATOR = r'\|\|'
 
 def t_IDENT( t ):
@@ -304,8 +304,8 @@ def p_element_expr(p):
     p[0] = p[1]
 
 
-def p_list_element_LISTCONCATENATOR_element(p):
-    'list : element LISTCONCATENATOR element'
+def p_element_element_LISTCONCATENATOR_list(p):
+    'element : element LISTCONCATENATOR list'
     print("p_list_element_LISTCONCATENATOR element")
     p[0] = Concat(p[1],p[3])
 
