@@ -19,36 +19,45 @@
 #       Procedure calls get their own environment, can not modify enclosing env
 #
 #   Grammar:
-#       program: stmt_list 
-#       stmt_list:  stmt ';' stmt_list 
-#           |   stmt  
-#       stmt:  assign_stmt 
-#           |  define_stmt 
-#           |  if_stmt 
-#           |  while_stmt 
+#       program: stmt_list
+#       stmt_list:  stmt ';' stmt_list
+#           |   stmt
+#       stmt:  assign_stmt
+#           |  define_stmt
+#           |  if_stmt
+#           |  while_stmt
 #       assign_stmt: IDENT ASSIGNOP expr
 #       define_stmt: DEFINE IDENT PROC '(' param_list ')' stmt_list END
 #       if_stmt: IF expr THEN stmt_list ELSE stmt_list FI
 #       while_stmt: WHILE expr DO stmt_list OD
-#       param_list: IDENT ',' param_list 
-#           |      IDENT 
-#       expr: expr '+' term   
-#           | expr '-' term   
-#           | term            
-#       term: term '*' factor   
-#           | factor            
-#       factor:     '(' expr ')'  
-#           |       NUMBER 
-#           |       IDENT 
-#           |       funcall 
+#       param_list: IDENT ',' param_list
+#           |      IDENT
+#       expr: expr '+' term
+#           | expr '-' term
+#           | term
+#       term: term '*' factor
+#           | factor
+#       factor:     '(' expr ')'
+#           |       NUMBER
+#           |       IDENT
+#           |       funcall
 #       funcall:  IDENT '(' expr_list ')'
-#       expr_list: expr ',' expr_list 
-#           |      expr 
+#       expr_list: expr ',' expr_list
+#           |      expr
 #
 
 import sys
 import copy
 import itertools
+import logging
+
+logging.basicConfig(
+    format = "%(levelname) -4s %(message)s",
+    level = logging.DEBUG
+)
+
+log = logging.getLogger('programext')
+
 ####  CONSTANTS   ################
 
     # the variable name used to store a proc's return value
@@ -70,16 +79,16 @@ class Heap :
 
     def add ( self, val ) :
         if(self.hasSpace()):
-            print("Adding to heap: "+str(val))
+            log.debug("Adding to heap: "+str(val))
             self.cellHeap.append(val)
             if(not isinstance(val,List)) :
                 raise Exception("Can only add lists to heap")
             flattenedLength = val.flattenedLength(None,None,None) # No args needed since lists don't need to be able to store vars/exprs; leaving in until prof. decides if this is extra credit or not
-            print("Flattened length is: "+str(flattenedLength))
+            log.debug("Flattened length is: "+str(flattenedLength))
             self.cellInUseCount = self.cellInUseCount + flattenedLength
-            print("Cell in use count is: "+str(self.cellInUseCount))
+            log.debug("Cell in use count is: "+str(self.cellInUseCount))
                 # Get length of list, and register at least this number of cells as being in use
-                
+
         else :
             raise Exception('Heap is full')
 
@@ -88,17 +97,17 @@ class Heap :
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
-                print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
+                log.debug("Marking list: " + str(val) + " identified by: "+name + " so as to not be collected")
                 val.mark(nt, ft, gh)
 
         itemsToRemove = set()
         for val in self.cellHeap :
-            print("Found in heap: "+str(val))
+            log.debug("Found in heap: "+str(val))
             if(isinstance(val,List) and (not val.marked)) :
-                print("Freeing unreferenced List: "+str(val))
+                log.debug("Freeing unreferenced List: "+str(val))
                 itemsToRemove.add(val)
             elif(isinstance(val,Number) and (not val.marked)) :
-                print("Freeing unreferenced Number: "+str(val))
+                log.debug("Freeing unreferenced Number: "+str(val))
                 itemsToRemove.add(val)
 
         # Sweep
@@ -106,7 +115,7 @@ class Heap :
             listCellCount = val.flattenedLength(None,None,None)
             self.cellInUseCount = self.cellInUseCount - listCellCount
             self.cellHeap.remove(val)
-        
+
         print("Cells in use at end of GC: "+str(self.cellInUseCount))
 
 ######   CLASSES   ##################
@@ -133,7 +142,7 @@ class Expr :
 class Element( Expr ) :
     '''Lists or integers'''
     def __init__( self, v=0 ) :
-        print("Element ctor")
+        log.debug("Element ctor")
         self.value = v
         self.marked = False
 
@@ -148,18 +157,24 @@ class Element( Expr ) :
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
 
+    def __str__(self):
+        return "%s" % self.value
+
 class Number( Element ) :
     '''Just integers'''
 
     def __init__( self, v=0 ) :
         self.value = v
         self.marked = False
-    
+
     def eval( self, nt, ft, gh ) :
         return self.value
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
+
+    def __str__(self):
+        return "%s" % self.value
 
 class List( Element ) :
 
@@ -171,8 +186,11 @@ class List( Element ) :
         if(self.sequence is not None) :
             self.sequence.display(nt,ft,depth+1)
 
+    def __str__(self):
+        return str(self.sequence)
+
     def addToHead( self, val ) :
-        print("Adding: "+str(val))
+        log.debug("Adding: "+str(val))
         self.values.insert(0,val)
 
     def registerWithHeap(self,globalHeap) :
@@ -211,8 +229,8 @@ class List( Element ) :
             if (successorLists is not None) :
                 for val in successorLists:
                     if not (val.marked):
-                        print("Marking successor")
-                        mark(val)            
+                        log.debug("Marking successor")
+                        mark(val)
 
 class Sequence( Expr ) :
 
@@ -223,7 +241,7 @@ class Sequence( Expr ) :
     def eval( self, nt, ft, gh ) :
         seq = self
         while(seq is not None) :
-            print(str(seq))
+            log.debug("Eval the sequence %s" % seq)
             yield seq.element.eval(nt,ft,gh)
             seq = seq.sequence
 
@@ -241,17 +259,27 @@ class Sequence( Expr ) :
         if(self.sequence is not None):
             self.sequence.display(nt,ft,depth)
 
+    def __str__(self):
+        result = str(self.element)
+        if(self.sequence is not None):
+            result = result + ", " + str(self.sequence)
+        return result
+
+
 class Ident( Expr ) :
     '''Stores the symbol'''
 
     def __init__( self, name ) :
         self.name = name
-    
+
     def eval( self, nt, ft, gh ) :
         return nt[ self.name ]
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%s" % (tabstop*depth, self.name)
+
+    def __str__(self):
+        return self.name
 
 
 class Times( Expr ) :
@@ -264,7 +292,7 @@ class Times( Expr ) :
         # if type( lhs ) == type( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
-    
+
     def eval( self, nt, ft, gh ) :
         return self.lhs.eval( nt, ft, gh ) * self.rhs.eval( nt, ft, gh )
 
@@ -281,7 +309,7 @@ class Plus( Expr ) :
     def __init__( self, lhs, rhs ) :
         self.lhs = lhs
         self.rhs = rhs
-    
+
     def eval( self, nt, ft, gh ) :
         return self.lhs.eval( nt, ft, gh ) + self.rhs.eval( nt, ft, gh )
 
@@ -298,7 +326,7 @@ class Minus( Expr ) :
     def __init__( self, lhs, rhs ) :
         self.lhs = lhs
         self.rhs = rhs
-    
+
     def eval( self, nt, ft, gh ) :
         return self.lhs.eval( nt, ft, gh ) - self.rhs.eval( nt, ft, gh )
 
@@ -321,15 +349,15 @@ class Concat( Expr ) :
         if(not isinstance(lhsEval,List) or not isinstance(rhsEval,List)) :
             raise Exception("Both elements applied for List concatenation using || operator must be lists")
         lhsListEval = lhsEval.eval(nt,ft,gh)
-        print("lhsListEval")
-        print(lhsListEval)
+        log.debug("lhsListEval")
+        log.debug(lhsListEval)
         rhsListEval = rhsEval.eval(nt,ft,gh)
-        print("rhsListEval")
-        print(rhsListEval)
+        log.debug("rhsListEval")
+        log.debug(rhsListEval)
         extendedList = lhsListEval + rhsListEval
-        print("Extended")
-        print(extendedList)
-        print(len(extendedList))
+        log.debug("Extended")
+        log.debug(extendedList)
+        log.debug(len(extendedList))
         return self.pythonListToList(extendedList)
 
     def display( self, nt, ft, depth=0 ) :
@@ -339,7 +367,7 @@ class Concat( Expr ) :
 
     def pythonListToList(self, inputList):
         listLen = len(inputList)
-        
+
         outerSeq = None
         i = 0
         while( i < listLen) :
@@ -363,11 +391,11 @@ class Concat( Expr ) :
 class FunCall( Expr ) :
     '''stores a function call:
       - its name, and arguments'''
-    
+
     def __init__( self, name, argList ) :
         self.name = name
         self.argList = argList
-    
+
     def car( self, nt, ft, gh ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
@@ -383,7 +411,7 @@ class FunCall( Expr ) :
 
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
-        
+
         # We have a parsed List object. Call eval to get a native list
         evaledList = listPassed.eval(nt,ft,gh)
 
@@ -393,7 +421,7 @@ class FunCall( Expr ) :
         return evaledList[0]
 
     def cdr( self, nt, ft, gh ) :
-        
+
         listArg = self.argList[0]
         listPassed = None
         if(isinstance(listArg,Ident)) :
@@ -422,9 +450,9 @@ class FunCall( Expr ) :
         atom = self.argList[0]
         evalAtom = atom.eval(nt,ft,gh)
         listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
-        print("atom is: "+str(atom))
-        print("listToAddAtomTo is: "+str(listToAddAtomTo))
-        
+        log.debug("atom is: "+str(atom))
+        log.debug("listToAddAtomTo is: "+str(listToAddAtomTo))
+
         if not(isinstance(listToAddAtomTo,List)) :
             raise Exception("Can only cons an atom onto a List")
 
@@ -434,9 +462,9 @@ class FunCall( Expr ) :
             wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
         else :
             wrapSeq = Sequence(sourceSeq.element)
-        newSeq = Sequence(evalAtom,wrapSeq) 
+        newSeq = Sequence(evalAtom,wrapSeq)
         newList = List(newSeq)
-        print("Created list: "+str(newList))
+        log.debug("Created list: "+str(newList))
         # Add the list pointer to the heap
         gh.add(newList)
         # Add the contents of list to the heap
@@ -493,7 +521,7 @@ class AssignStmt( Stmt ) :
         rhs'''
         self.name = name
         self.rhs = rhs
-    
+
     def eval( self, nt, ft, gh ) :
         if(isinstance(self.rhs,List)) :
             # Lists aren't eval'd at assignment time; the values might change. Members are only evalued when we car an item off and eval it
@@ -528,7 +556,7 @@ class IfStmt( Stmt ) :
         cond - expression (integer)
         tBody - StmtList
         fBody - StmtList'''
-        
+
         self.cond = cond
         self.tBody = tBody
         self.fBody = fBody
@@ -571,14 +599,14 @@ class StmtList :
 
     def __init__( self ) :
         self.sl = []
-    
+
     def insert( self, stmt ) :
         self.sl.insert( 0, stmt )
-    
+
     def eval( self, nt, ft, gh ) :
         for s in self.sl :
             s.eval( nt, ft, gh )
-    
+
     def display( self, nt, ft, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
         for s in self.sl :
@@ -625,23 +653,23 @@ class Proc :
         else :
             print "Error:  no return value"
             sys.exit( 2 )
-    
+
     def display( self, nt, ft, depth=0 ) :
         print "%sPROC %s :" % (tabstop*depth, str(self.parList))
         self.body.display( nt, ft, depth+1 )
 
 
 class Program :
-    
+
     def __init__( self, stmtList, heap ) :
         self.stmtList = stmtList
         self.nameTable = {}
         self.funcTable = {}
         self.globalHeap = heap
- 
+
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable,self.globalHeap )
-    
+
     def dump( self ) :
         print "Dump of Symbol Table"
         for k in self.nameTable :
