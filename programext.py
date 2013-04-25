@@ -111,53 +111,38 @@ class List( Element ) :
             else :
                 self.values.append(s)
 
-
     def unPackSequence(self,seq):
+        """ Loops through the sequence, pulling out
+        lists and numbers and appends to one list.
+
+        :param seq: Sequence Object.
+        """
+
         for val in seq.values:
-            print val
+            # If this is a Sequence, we need to loop
+            # through all of the values.
             if (isinstance(val,Sequence)):
                 for y in val.values:
+                    # Need to check for a nested Sequence..
                     if (isinstance(y,Sequence)):
                         self.unPackSequence(y)
+                    # Check for a nested list..
+                    elif (isinstance(y,List)):
+                        # Simply loop through all values adding them
+                        # to the list object.
+                        for l in y.values:
+                            self.values.append(l)
                     else:
+                        # Number object, just add to the list.
                         self.values.append(y)
-                        print "Adding %i to list." % (y.value)
+            elif(isinstance(val,List)):
+                for l in val.values:
+                    # Simply loop through all values adding them
+                    # to the list object.
+                    self.values.append(l)
             else:
+                # Number object, just add to the list.
                 self.values.append(val)
-                print "Adding %i to list." % (val.value)
-
-                ##        self.values = list()
-                ##        if(s is not None):
-                ##
-                ##            for val in s.values :
-                ##                if (isinstance(val,Sequence)):
-                ##                    for x in val.values:
-                ##                        self.values.append(x)
-                ##                        print "Adding %i to list." % (x.value)
-                ##                else:
-                ##                    self.values.append(val)
-                ##                    print "Adding %i to list." % (val.value)
-
-
-
-                ##            if (isinstance(s,Sequence)) :
-                ##                # Because we don't want to improperly create too many nested lists, a sequnece is "unrolled" and stored in an existing list
-                ##                for val in s.values :
-                ##                    if (isinstance(val,Sequence)):
-                ##                        for x in val.values:
-                ##                            self.values.append(x)
-                ##                    else:
-                ##                        self.values.append(val)
-                ##            else :
-                ##                self.values.append(s)
-
-
-
-
-
-
-
-
 
     def eval( self, nt, ft ) :
 
