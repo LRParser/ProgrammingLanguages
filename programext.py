@@ -93,16 +93,26 @@ class Expr :
         outerSeq = None
         i = 0
         while( i < listLen) :
-            log.debug("Pylist2list: %s" % str(i))
+            print(str(i))
             val = inputList[i]
-            currentNum = Number(val)
-            innerSeq = Sequence(currentNum)
+
+            currentElem = None
+
+            if(isinstance(val,Number) or isinstance(val,int)) :
+                currentElem = Number(val)
+
+            elif(isinstance(val,List)) :
+                currentElem = pythonListToList(inputList)
+
+            innerSeq = Sequence(currentElem)
+
             if(outerSeq is not None) :
                 outerSeq = Sequence(outerSeq,innerSeq)
             else :
                 outerSeq = Sequence(innerSeq)
             i = (i+1)
         createdList = List(outerSeq)
+
         return createdList
 
 
@@ -184,7 +194,7 @@ class List( Element ) :
         for val in self.values :
             val.display(nt,ft,depth+1)
 
-    def __repr__(self):
+    def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
         the memory addr, which doesn't work out so well when trying to compare
         test results.
@@ -225,6 +235,10 @@ class Ident( Expr ) :
 
     def __init__( self, name ) :
         self.name = name
+
+
+    def __str__(self):
+        return self.name
 
     def eval( self, nt, ft ) :
         return nt[ self.name ]
@@ -357,9 +371,11 @@ class FunCall( Expr ):
 
         listArg = self.argList[0]
         listPassed = None
+
         if(isinstance(listArg,Ident)) :
             # We were passed an Ident
-            listPassed = self.argList[0].eval(nt,ft)
+            #            listPassed = self.argList[0].eval(nt,ft)
+            listPassed = evalIdent(listArg, nt, ft)
         elif(isinstance(listArg,List)) :
             # We were passed a List object
             listPassed = listArg
@@ -645,3 +661,17 @@ class Program :
     def display( self, depth=0 ) :
         print "%sPROGRAM :" % (tabstop*depth)
         self.stmtList.display( self.nameTable, self.funcTable )
+
+# FUNCTIONS
+
+def evalIdent(ident, nt, ft):
+
+    orig = ident
+
+    while (isinstance(ident, Ident) and not isinstance(ident, List)):
+        ident = ident.eval(nt, ft)
+
+    if not isinstance(ident,List):
+        return orig.pythonListToList(ident)
+    else:
+        return ident
