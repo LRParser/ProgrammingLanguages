@@ -49,6 +49,16 @@
 import sys
 import copy
 import itertools
+import logging
+
+logging.basicConfig(
+   format = "%(levelname) -4s %(message)s",
+   level = logging.DEBUG
+)
+
+log = logging.getLogger('programext')
+
+
 ####  CONSTANTS   ################
 
 # the variable name used to store a proc's return value
