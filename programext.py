@@ -87,6 +87,25 @@ class Expr :
         raise NotImplementedError(
             'Expr.display: virtual method.  Must be overridden.' )
 
+    def pythonListToList(self, inputList):
+        listLen = len(inputList)
+
+        outerSeq = None
+        i = 0
+        while( i < listLen) :
+            log.debug("Pylist2list: %s" % str(i))
+            val = inputList[i]
+            currentNum = Number(val)
+            innerSeq = Sequence(currentNum)
+            if(outerSeq is not None) :
+                outerSeq = Sequence(outerSeq,innerSeq)
+            else :
+                outerSeq = Sequence(innerSeq)
+            i = (i+1)
+        createdList = List(outerSeq)
+        return createdList
+
+
 class Element( Expr ) :
     '''Lists or integers'''
     def __init__( self, v=0 ) :
@@ -300,23 +319,6 @@ class Concat( Expr ) :
         self.rhs.display( nt, ft, depth+1 )
 
 
-    def pythonListToList(self, inputList):
-        listLen = len(inputList)
-
-        outerSeq = None
-        i = 0
-        while( i < listLen) :
-            print(str(i))
-            val = inputList[i]
-            currentNum = Number(val)
-            innerSeq = Sequence(currentNum)
-            if(outerSeq is not None) :
-                outerSeq = Sequence(outerSeq,innerSeq)
-            else :
-                outerSeq = Sequence(innerSeq)
-            i = (i+1)
-        createdList = List(outerSeq)
-        return createdList
 
 
 class FunCall( Expr ):
@@ -371,7 +373,7 @@ class FunCall( Expr ):
         if(len(evaledList) < 1) :
             raise Exception("Can't call cdr on empty List")
 
-        return evaledList[1:]
+        return self.pythonListToList(evaledList[1:])
 
     def nullp( self, nt, ft ):
         'Returns 1 if the List is Null, otherwise 0'
