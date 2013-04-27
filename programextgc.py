@@ -264,11 +264,16 @@ class List( Element ) :
 class Sequence( Expr ) :
 
     def __init__( self, e, s=None ) :
-        self.element = e
-        self.sequence = s
+        self.values = list()
+        self.insertHead(e)
+        if(s is not None):
+            self.appendTail(s)
 
-    def numberIterator( self ) :
-        seq = self
+    def insertHead( self , e ) :
+        self.values.insert(0,e)
+
+    def appendTail ( self, e ) :
+        self.values.append(e)    
 
     def eval( self, nt, ft ) :
         evaledSeq = list()
