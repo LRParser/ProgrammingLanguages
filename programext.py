@@ -93,7 +93,6 @@ class Expr :
         outerSeq = None
         i = 0
         while( i < listLen) :
-            print(str(i))
             val = inputList[i]
 
             currentElem = None
