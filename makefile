@@ -1,6 +1,7 @@
 CC=python
 INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
+GC=programextgc.py
 
 TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
@@ -18,7 +19,7 @@ RUN_TEST2=$(CC) $(TEST_DIR)/$(TESTER2)
 LINT_FILE=pylint.rc
 
 
-.PHONY : clean test lint
+.PHONY : clean test lint build view-part1 view-part2
 
 
 lint: clean
@@ -40,10 +41,26 @@ test-part2: clean
 	for test in 'ls $(TEST_INPUT_DIR2)/'; do \
 		diff $(TEST_ANSWER_DIR2)/$(test) $(TEST_OUTPUT_DIR2)/$(test); \
 	done
- 
+
 test: test-part1 test-part2
 
 clean:
 	@rm -f *.pyc *.out parsetab.py
 	@rm -rf $(TEST_OUTPUT_DIR1)
 	@rm -rf $(TEST_OUTPUT_DIR2)
+
+view-part1 : clean
+	@more $(INTERPRET) $(PROGRAMEXT)
+
+view-part2 : clean
+	@more $(INTERPRET) $(GC)
+
+
+build : clean
+
+run-part1: clean
+	@$(CC) $(INTERPRET)
+
+run-part2: clean
+	#FIX ME, needs to be interpretgc.py
+	@$(CC) $(GC)
