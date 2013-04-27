@@ -93,16 +93,22 @@ class Expr :
         outerSeq = None
         i = 0
         while( i < listLen) :
-            print(str(i))
+
             val = inputList[i]
 
-            currentElem = None
+            # check to see if the current element is a native python type
 
-            if(isinstance(val,Number) or isinstance(val,int)) :
+            if isinstance(val,int) :
+                # convert to Number
                 currentElem = Number(val)
 
-            elif(isinstance(val,List)) :
-                currentElem = pythonListToList(inputList)
+            elif isinstance(val, list) :
+                # convert to List
+                currentElem = self.pythonListToList(val)
+
+            else :
+                # it's not a native python type
+                currentElem = val
 
             innerSeq = Sequence(currentElem)
 
@@ -111,6 +117,7 @@ class Expr :
             else :
                 outerSeq = Sequence(innerSeq)
             i = (i+1)
+
         createdList = List(outerSeq)
 
         return createdList
@@ -307,21 +314,46 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft) :
-        lhsEval = self.lhs.eval(nt,ft)
-        rhsEval = self.rhs.eval(nt,ft)
-        if(not isinstance(lhsEval,List) or not isinstance(rhsEval,List)) :
-            raise Exception("Both elements applied for List concatenation using || operator must be lists")
-        lhsListEval = lhsEval.eval(nt,ft)
-        print("lhsListEval")
-        print(lhsListEval)
-        rhsListEval = rhsEval.eval(nt,ft)
-        print("rhsListEval")
-        print(rhsListEval)
+        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List) or isinstance(self.lhs, FunCall)) :
+            raise Exception("List concatenation requires two Lists")
+        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List) or isinstance(self.rhs, FunCall)) :
+            raise Exception("List concatenation requires two Lists")
+
+        if isinstance(self.lhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
+            lhsIdent = self.lhs.eval(nt, ft)
+            lhsListEval = lhsIdent.eval(nt, ft)
+            if not isinstance(lhsListEval, list) :
+                raise Exception("Identity must be a list for || operator")
+        elif isinstance(self.lhs, FunCall) :
+            # since it's a FunCall, it needs two-level evaluation to get to the native python list
+            lhsFunc = self.lhs.eval(nt, ft)
+            lhsListEval = lhsFunc.eval(nt, ft)
+            if not isinstance(lhsListEval, list) :
+                raise Exception("Function must return a List for || operator")
+        else :
+            # only requires one-level of evaluation to get to the native python list
+            lhsListEval = self.lhs.eval(nt, ft)
+
+        if isinstance(self.rhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
+            rhsIdent = self.rhs.eval(nt, ft)
+            rhsListEval = rhsIdent.eval(nt, ft)
+            if not isinstance(rhsListEval, list) :
+                raise Exception("Identity must be a list for || operator")
+        elif isinstance(self.rhs, FunCall) :
+            # since it's a FunCall, it needs two-level evaluation to get to the native python list
+            rhsFunc = self.rhs.eval(nt, ft)
+            rhsListEval = rhsFunc.eval(nt, ft)
+            if not isinstance(rhsListEval, list) :
+                raise Exception("Function must return a List for || operator")
+        else :
+            # only requires one-level of evaluation to get to the native python list
+            rhsListEval = self.rhs.eval(nt, ft)
+
         extendedList = lhsListEval + rhsListEval
-        print("Extended")
-        print(extendedList)
-        print(len(extendedList))
         return self.pythonListToList(extendedList)
+
 
 
     def display( self, nt, ft, depth=0 ) :
@@ -457,7 +489,7 @@ class FunCall( Expr ):
         # then insert evalObject at the head of the list
         newList = evalDestList
         newList.insert(0, evalObject)
-        return newList
+        return self.pythonListToList(newList)
 
     def eval( self, nt, ft ) :
         func = getattr(self, self.name, None)
