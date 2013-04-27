@@ -22,9 +22,8 @@ lint: clean
 # This is the idea... but it needs to be cleaned up to handle a growing number of tests
 test: clean
 	@$(RUN_TEST)
-#Add tests here
+	@echo "Checking answers"
 	@for test in `ls -1 $(TEST_INPUT_DIR)/`; do \
-		echo "checking ${test} answers"; \
 		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}; \
 	done
 
