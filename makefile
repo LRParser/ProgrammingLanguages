@@ -6,6 +6,7 @@ TEST_IN=SampleInputs
 TEST_DIR=test
 TEST_OUTPUT_DIR=$(TEST_DIR)/output
 TEST_ANSWER_DIR=$(TEST_DIR)/answers
+TEST_INPUT_DIR=$(TEST_DIR)/SampleInputs
 TESTER=runtest.py
 RUN_TEST=$(CC) $(TEST_DIR)/$(TESTER)
 LINT_FILE=pylint.rc
@@ -23,11 +24,8 @@ lint: clean
 test: clean
 	@$(RUN_TEST)
 #Add tests here
-	diff $(TEST_ANSWER_DIR)/add.p $(TEST_OUTPUT_DIR)/add.p
-	diff $(TEST_ANSWER_DIR)/assignlist1.p $(TEST_OUTPUT_DIR)/assignlist1.p
-	diff $(TEST_ANSWER_DIR)/assignlist2.p $(TEST_OUTPUT_DIR)/assignlist2.p
-	diff $(TEST_ANSWER_DIR)/carTest.p $(TEST_OUTPUT_DIR)/carTest.p
-	diff $(TEST_ANSWER_DIR)/cons.p $(TEST_OUTPUT_DIR)/cons.p
+	@for test in `ls -1 $SAMPLES/`
+		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}
 
 
 clean:
