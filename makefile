@@ -32,16 +32,13 @@ lint: clean
 test-part1: clean
 	@$(RUN_TEST1)
 	@echo "Checking answers"
-	for test in `ls $(TEST_INPUT_DIR1)/`; do \
-		diff $(TEST_ANSWER_DIR1)/$(test) $(TEST_OUTPUT_DIR1)/$(test); \
-        done
+	@diff $(TEST_ANSWER_DIR1) $(TEST_OUTPUT_DIR1)
 
 test-part2: clean
 	@$(RUN_TEST2)
 	@echo "Checking answers"
-	for test in 'ls $(TEST_INPUT_DIR2)/'; do \
-		diff $(TEST_ANSWER_DIR2)/$(test) $(TEST_OUTPUT_DIR2)/$(test); \
-	done
+	@diff $(TEST_ANSWER_DIR2) $(TEST_OUTPUT_DIR2)
+
 
 test: test-part1 test-part2
 
