@@ -23,8 +23,10 @@ lint: clean
 test: clean
 	@$(RUN_TEST)
 #Add tests here
-	@for test in `ls -1 $(TEST_INPUT_DIR)/`
-		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}
+	@for test in `ls -1 $(TEST_INPUT_DIR)/`; do \
+		echo "checking ${test} answers"; \
+		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}; \
+	done
 
 clean:
 	@rm -f *.pyc *.out parsetab.py
