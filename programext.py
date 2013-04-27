@@ -183,7 +183,8 @@ class List( Element ) :
 
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
-            evaledList[i] = evaledList[i].eval(nt,ft)
+            if evaledList[i] is not None:
+                evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
     def display( self, nt, ft, depth=0 ) :
