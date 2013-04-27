@@ -72,7 +72,7 @@ tabstop = '  ' # 2 spaces
 class MiniLangUtils :
 
     @staticmethod
-    def pythonListToList(inputList, gh):
+    def pythonListToList(inputList):
         listLen = len(inputList)
 
         outerSeq = None
@@ -89,18 +89,18 @@ class MiniLangUtils :
 
             elif isinstance(val, list) :
                 # convert to List
-                currentElem = MiniLangUtils.pythonListToList(val, gh)
+                currentElem = MiniLangUtils.pythonListToList(val)
 
             else :
                 # it's not a native python type
                 currentElem = val
 
-            innerSeq = Sequence(False,gh, currentElem)
+            innerSeq = Sequence(False,None, currentElem)
 
             if(outerSeq is not None) :
-                outerSeq = Sequence(False,gh,outerSeq,innerSeq)
+                outerSeq = Sequence(False,None,outerSeq,innerSeq)
             else :
-                outerSeq = Sequence(False,gh,innerSeq)
+                outerSeq = Sequence(False,None,innerSeq)
             i = (i+1)
 
         createdList = List(outerSeq)
@@ -307,10 +307,13 @@ class Sequence( Expr ) :
             consCell = BuiltIns.cons(self.element,self.sequence, self.gh)
 
     def eval( self, nt, ft ) :
-        seq = self
-        while(seq is not None) :
-            yield seq.element.eval(nt,ft)
-            seq = seq.sequence
+        for val in self.numberIterator() :
+            return val.eval(nt,ft)
+
+#        seq = self
+#       while(seq is not None) :
+#            yield seq.element.eval(nt,ft)
+#            seq = seq.sequence
 
     def numberIterator( self ) :
         seq = self
@@ -559,42 +562,38 @@ class FunCall( Expr ):
         except:
             return 0
 
-    def cons( self, nt, ft ) :
+    def cons( self, nt, ft, gh ) :
         '''Returns a new list, with element prepended to existing list'''
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
 
         # evaluate the first argument
         arg1 = self.argList[0]
+        atom = None
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
-            # needs to be evaluated twice to get to native python type
-            object = arg1.eval(nt, ft)
-            evalObject = object.eval(nt,ft)
+            # needs to be evaluated once to get to a List or Number
+            atom = arg1.eval(nt, ft)
         else :
-            # only needs to be evaluated once to get to native python type
-            evalObject = arg1.eval(nt,ft)
-        if not(isinstance(evalObject, list) or isinstance(evalObject, int)) :
-            raise Exception("Can only cons an object onto a List")
+            atom = arg1
+        if not(isinstance(atom, Element)) :
+            raise Exception("Can only cons an element (List or Number) onto a List")
 
         # evaluate the second argument
         arg2 = self.argList[1]
+        destList = None
         if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
-            # needs to be evaluated twice to get to the native python type
+            # needs to be evaluated once to get to a List or Number
             destList = arg2.eval(nt,ft)
-            if isinstance(destList, int) :
-                raise Exception("Can only cons an object onto a List")
-            evalDestList = destList.eval(nt,ft)
         else :
-            evalDestList = arg2.eval(nt,ft)
-        if not(isinstance(evalDestList, list)) :
+            destList = arg2
+        if not isinstance(destList, List) :
             raise Exception("Can only cons an object onto a List")
 
         # arguments check out, so create a new list based on evalDestList
         # then insert evalObject at the head of the list
-        newList = evalDestList
-        newList.insert(0, evalObject)
-        return MiniLangUtils.pythonListToList(newList)
-        #return newList
+
+        newList = BuiltIns.cons(atom,destList,gh)
+        return newList
 
 
     def eval( self, nt, ft ) :
