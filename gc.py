@@ -51,3 +51,23 @@ class Heap :
 
         print("Cells in use at end of GC: "+str(self.cellInUseCount))
 
+## Begin Expr Extensions ###
+
+class Expr :
+	pass
+
+def cellCount(self, pythonList):
+'''Returns the total number of cells in a list relevant for GC purposes; each number counts as 1 cell'''
+    totalLength = 0
+	for val in inputList :
+	    if(isinstance(val,list)) :
+		totalLength = totalLength + cellCount(val)
+	    else :
+		totalLength = totalLength + 1
+    return totalLength
+
+Expr.cellCount = cellCount
+
+### End Expr Extensions ###
+
+
