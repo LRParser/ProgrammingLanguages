@@ -2,7 +2,6 @@ CC=python
 INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
 
-TEST_IN=SampleInputs
 TEST_DIR=test
 TEST_OUTPUT_DIR=$(TEST_DIR)/output
 TEST_ANSWER_DIR=$(TEST_DIR)/answers
@@ -24,10 +23,11 @@ lint: clean
 test: clean
 	@$(RUN_TEST)
 #Add tests here
-	@for test in `ls -1 $SAMPLES/`
+	@for test in `ls -1 $(TEST_INPUT_DIR)/`
 		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}
-
 
 clean:
 	@rm -f *.pyc *.out parsetab.py
 	@rm -rf $(TEST_OUTPUT_DIR)
+
+
