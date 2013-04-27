@@ -428,24 +428,33 @@ class FunCall( Expr ):
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
 
-        atom = self.argList[0]
-        evalAtom = atom.eval(nt,ft)
-        listToAddAtomTo = self.argList[1].eval(nt,ft)
-        print("atom is: "+str(atom))
-        print("listToAddAtomTo is: "+str(listToAddAtomTo))
-
-        if not(isinstance(listToAddAtomTo, list)) :
-            raise Exception("Can only cons an atom onto a List")
-
-        sourceSeq = listToAddAtomTo.sequence
-        if(sourceSeq.sequence is not None) :
-            wrapSeq = Sequence(sourceSeq.element, sourceSeq.sequence)
+        # evaluate the first argument
+        arg1 = self.argList[0]
+        if isinstance(arg1, Ident) :
+            # needs to be evaluated twice to get to native python type
+            object = arg1.eval(nt, ft)
+            evalObject = object.eval(nt,ft)
         else :
-            wrapSeq = Sequence(sourceSeq.element)
-        newSeq = Sequence(evalAtom, wrapSeq)
-        newList = List(newSeq)
-        print("Created list: "+str(newList))
+            # only needs to be evaluated once to get to native python type
+            evalObject = arg1.eval(nt,ft)
+        if not(isinstance(evalObject, list) or isinstance(evalObject, int)) :
+            raise Exception("Can only cons an object onto a List")
 
+        # evaluate the second argument
+        arg2 = self.argList[1]
+        if isinstance(arg2, Ident) :
+            # needs to be evaluated twice to get to the native python type
+            destList = arg2.eval(nt,ft)
+            evalDestList = destList.eval(nt,ft)
+        else :
+            evalDestList = arg2.eval(nt,ft)
+        if not(isinstance(evalDestList, list)) :
+            raise Exception("Can only cons an object onto a List")
+
+        # arguments check out, so create a new list based on evalDestList
+        # then insert evalObject at the head of the list
+        newList = evalDestList
+        newList.insert(0, evalObject)
         return newList
 
     def eval( self, nt, ft ) :
