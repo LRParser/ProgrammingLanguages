@@ -455,7 +455,7 @@ class BuiltIns :
 
     @staticmethod
     def car(listPassed) :
-        return listPassed.values[0]
+        return listPassed.sequence.element
 
     @staticmethod
     def cons(atom, listPassed, gh) :
@@ -498,7 +498,7 @@ class FunCall( Expr ):
             raise Exception("Can only call car on List")
 
         # Validation complete   
-        return BuiltIns.car(nt,ft,listPassed)
+        return BuiltIns.car(listPassed)
     
     def cdr( self, nt, ft):
 
