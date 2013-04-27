@@ -69,6 +69,44 @@ tabstop = '  ' # 2 spaces
 
 ##### General Helper Methods ########
 
+class MiniLangUtils :
+
+    @staticmethod
+    def pythonListToList(inputList, gh):
+        listLen = len(inputList)
+
+        outerSeq = None
+        i = 0
+        while( i < listLen) :
+
+            val = inputList[i]
+
+            # check to see if the current element is a native python type
+
+            if isinstance(val,int) :
+                # convert to Number
+                currentElem = Number(val)
+
+            elif isinstance(val, list) :
+                # convert to List
+                currentElem = MiniLangUtils.pythonListToList(val, gh)
+
+            else :
+                # it's not a native python type
+                currentElem = val
+
+            innerSeq = Sequence(False,gh, currentElem)
+
+            if(outerSeq is not None) :
+                outerSeq = Sequence(False,gh,outerSeq,innerSeq)
+            else :
+                outerSeq = Sequence(False,gh,innerSeq)
+            i = (i+1)
+
+        createdList = List(outerSeq)
+
+        return createdList
+    
 
 
 ######  GARBAGE COLLECTION ##########
@@ -77,37 +115,29 @@ class Heap :
 
     def __init__( self, maxSize=100 ) :
         self.cellHeap = list()
-        self.cellInUseCount = 0
         self.maxSize = maxSize
 
     def hasSpace( self ) :
         return (len(self.cellHeap)<self.maxSize)
 
     def add ( self, val ) :
-        if(self.hasSpace()):
+        if(self.hasSpace() and not val in self.cellHeap):
+            if(not isinstance(val,Number)) :
+                raise Exception("Can only add Numbers to heap")
             print("Adding to heap: "+str(val))
             self.cellHeap.append(val)
-            if(not isinstance(val,List)) :
-                raise Exception("Can only add lists to heap")
-            nativeList = val.eval(nt, ft)
-            cellCount = val.cellCount(nt,ft) 
-            print("Cell count is: "+str(flattenedLength))
-            self.cellInUseCount = self.cellInUseCount + flattenedLength
-            print("Cell in use count is: "+str(self.cellInUseCount))
-        else :
-            # Need to collect garbage
-            self.collectGarbage(nt, ft)
+            print("Cell in use count is: "+str(len(self.cellHeap)))
         if not(self.hasSpace()) :
             # We failed to reclaim enough space; raise Exception
             raise Exception('Heap is full and garbage collection failed to reclaim space')
 
     def collectGarbage(self, nt, ft) :
-        print("Cells in use at start of GC: "+str(self.cellInUseCount))
+        print("Cells in use at start of GC: "+str(len(self.cellHeap)))
         for name in nt :
             val = nt[name]
-            if(isinstance(val,List)) :
-                print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
-                val.mark(nt, ft)
+            if(isinstance(val,List) or isinstance(val,Number)) :
+                print("Marking: " + str(val) + "identified by: "+name + " so as to not be collected")
+                val.mark()
 
         itemsToRemove = set()
         for val in self.cellHeap :
@@ -121,11 +151,9 @@ class Heap :
 
         # Sweep
         for val in itemsToRemove :
-            listCellCount = val.flattenedLength(None,None,None)
-            self.cellInUseCount = self.cellInUseCount - listCellCount
             self.cellHeap.remove(val)
 
-        print("Cells in use at end of GC: "+str(self.cellInUseCount))
+        print("Cells in use at end of GC: "+str(len(self.cellHeap)))
 
 ######   CLASSES   ##################
 
@@ -148,41 +176,6 @@ class Expr :
         raise NotImplementedError(
             'Expr.display: virtual method.  Must be overridden.' )
 
-    def pythonListToList(self, inputList):
-        listLen = len(inputList)
-
-        outerSeq = None
-        i = 0
-        while( i < listLen) :
-
-            val = inputList[i]
-
-            # check to see if the current element is a native python type
-
-            if isinstance(val,int) :
-                # convert to Number
-                currentElem = Number(val)
-
-            elif isinstance(val, list) :
-                # convert to List
-                currentElem = self.pythonListToList(val)
-
-            else :
-                # it's not a native python type
-                currentElem = val
-
-            innerSeq = Sequence(currentElem)
-
-            if(outerSeq is not None) :
-                outerSeq = Sequence(outerSeq,innerSeq)
-            else :
-                outerSeq = Sequence(innerSeq)
-            i = (i+1)
-
-        createdList = List(outerSeq)
-
-        return createdList
-    
 
 class Element( Expr ) :
     '''Lists or integers'''
@@ -208,16 +201,13 @@ class Number( Element ) :
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
 
+    def mark( self ) :
+        self.marked = True
+
 class List( Element ) :
 
     def __init__( self, s=None ) :
-        self.values = list()
-        self.marked = False
-        if(s is not None):
-            if (isinstance(s,Sequence)) :
-                self.unPackSequence(s)
-            else :
-                self.values.append(s)
+        self.sequence = s
 
     def registerWithHeap(self, gh) :
         gh.add(self)
@@ -252,60 +242,55 @@ class List( Element ) :
                 self.values.append(val)
 
     def eval( self, nt, ft ) :
-
-        evaledList = copy.deepcopy(self.values)
-        for i in xrange(len(evaledList)) :
-            if evaledList[i] is not None:
-                if isinstance(evaledList[i], FunCall) :
-                    funCallValue = evaledList[i].eval(nt, ft)
-                    if isinstance(funCallValue, List) :
-                        evaledList[i] = funCallValue.eval(nt, ft)
-                    else :
-                        evaledList[i] = funCallValue
-                else :
-                    evaledList[i] = evaledList[i].eval(nt,ft)
-        return evaledList
-
+        if(self.sequence is not None) :
+            return list(self.sequence.eval(nt,ft))
+        else :
+            return list()
     
     def display( self, nt, ft, depth=0 ) :
-        for val in self.values :
-                val.display(nt,ft,depth)
+        if(self.sequence is not None) :
+            self.sequence.display(nt,ft,depth)
+
+    def numberIterator( self ) :
+        return self.sequence.numberIterator()
+
+    def mark( self ) :
+        for val in self.numberIterator() :
+            val.marked = True
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
         the memory addr, which doesn't work out so well when trying to compare
         test results.
         '''
-        return "List with %d elements" % len(self.values)
+        return "List with %d elements" % len(list(self.numberIterator()))
 
 class Sequence( Expr ) :
 
-    def __init__( self, e, s=None ) :
-        self.values = list()
-        self.insertHead(e)
-        if(s is not None):
-            self.appendTail(s)
-
-    def insertHead( self , e ) :
-        self.values.insert(0,e)
-
-    def appendTail ( self, e ) :
-        self.values.append(e)
+    def __init__( self, allocMemory, gh, e, s=None ) :
+        self.gh = gh
+        self.element = e
+        self.sequence = s
+        if(allocMemory) :
+            consCell = BuiltIns.cons(self.element,self.sequence, self.gh)
 
     def eval( self, nt, ft ) :
-        evaledSeq = list()
-        for val in self.values :
-            evaledSeq.append(val.eval(nt,ft))
-        return evaledSeq
-        #for val in self.values :
-        #    yield val.eval(nt,ft)
+        seq = self
+        while(seq is not None) :
+            yield seq.element.eval(nt,ft)
+            seq = seq.sequence
+
+    def numberIterator( self ) :
+        seq = self
+        while(seq is not None) :
+            if(isinstance(seq.element,Number)) :
+                yield seq.element
+            seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
-        if self.values is not None :
-            for val in self.values :
-                val.display(nt, ft, depth)
-        else :
-            print("Empty")
+        self.element.display(nt,ft,depth)
+        if(self.sequence is not None):
+            self.sequence.display(nt,ft,depth)
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -425,7 +410,7 @@ class Concat( Expr ) :
             rhsListEval = self.rhs.eval(nt, ft)
 
         extendedList = lhsListEval + rhsListEval
-        return self.pythonListToList(extendedList)
+        return MiniLangUtils.pythonListToList(extendedList)
 
 
 
@@ -437,10 +422,22 @@ class Concat( Expr ) :
 class BuiltIns :
 
     @staticmethod
-    def car(nt, ft, listPassed) :
+    def car(listPassed) :
         return listPassed.values[0]
 
+    @staticmethod
+    def cons(atom, listPassed, gh) :
 
+        if(isinstance(atom,Number)) :
+            gh.add(atom)
+
+        newSeq = None
+        if(listPassed is not None and listPassed.sequence is not None) :
+            newSeq = Sequence(False,gh,atom,wrapSeq)
+        else :
+            newSeq = Sequence(False,gh,atom)
+        newList = List(newSeq)
+        return newList
 
 class FunCall( Expr ):
     '''stores a function call:
@@ -564,7 +561,7 @@ class FunCall( Expr ):
         # then insert evalObject at the head of the list
         newList = evalDestList
         newList.insert(0, evalObject)
-        return self.pythonListToList(newList)
+        return MiniLangUtils.pythonListToList(newList)
         #return newList
 
 
@@ -617,8 +614,7 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
 
     def eval( self, nt, ft ) :
-        if(isinstance(self.rhs.eval(nt,ft),list)) :
-            # We shouldn't eval the list at assignment time, per instructions
+        if(isinstance(self.rhs,List) or isinstance(self.rhs,Number)) :
             nt[ self.name ] = self.rhs
         else :
             nt[ self.name ] = self.rhs.eval( nt, ft )
@@ -755,10 +751,11 @@ class Proc :
 
 class Program :
 
-    def __init__( self, stmtList ) :
+    def __init__( self, stmtList, gh ) :
         self.stmtList = stmtList
-        self.nameTable = {}
-        self.funcTable = {}
+        self.nameTable = dict()
+        self.funcTable = dict()
+        self.globalHeap = gh
 
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable )
@@ -767,7 +764,13 @@ class Program :
         print "Dump of Symbol Table"
         for k in self.nameTable :
             print "  %s -> " % ( str(k) )
-            self.nameTable[k].display(self.nameTable,self.funcTable)
+            val = self.nameTable[k]
+            if(isinstance(val,int)) :
+                print(val)
+            elif(isinstance(val,list)) :
+                print(val)
+            else :
+                self.nameTable[k].display(self.nameTable,self.funcTable)
         print "Function Table"
         for k in self.funcTable :
             print "  %s" % str(k)
@@ -786,6 +789,6 @@ def evalIdent(ident, nt, ft):
         ident = ident.eval(nt, ft)
 
     if not isinstance(ident,List):
-        return orig.pythonListToList(ident)
+        return MiniLangUtils.pythonListToList(ident)
     else:
         return ident

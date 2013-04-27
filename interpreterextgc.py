@@ -136,11 +136,12 @@ globalHeap = Heap(10)
 
 def p_program( p ) :
     'program : stmt_list'
-    P = Program( p[1] )
+    P = Program( p[1], globalHeap )
     P.display()
     print 'Running Program'
     P.eval()
     P.dump()
+    globalHeap.collectGarbage(P.nameTable,P.funcTable)
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list
@@ -283,13 +284,13 @@ def p_list_leftparen_rightparen(p):
 def p_sequence_element_comma_sequence(p):
     'sequence : element COMMA sequence'
     #    print("p_sequence_element_comma_sequence")
-    p[0] = Sequence(p[1],p[3])
+    p[0] = Sequence(True,globalHeap,p[1],p[3])
 
 
 def p_sequence_element(p):
     'sequence : element'
     #    print("p_sequence_element")
-    p[0] = Sequence(p[1])
+    p[0] = Sequence(True,globalHeap,p[1])
 
 
 def p_element_list(p):
