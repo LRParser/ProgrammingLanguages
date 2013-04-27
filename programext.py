@@ -406,7 +406,8 @@ class FunCall( Expr ):
         "Returns 1 if a list, otherwise 0"
 
         try:
-            if isinstance(self.argList[0].eval(nt,ft), List):
+            evaledArg = self.argList[0].eval(nt,ft)
+            if isinstance(evaledArg, List) or isinstance(evaledArg, list) :
                 return 1
             else:
                 return 0
