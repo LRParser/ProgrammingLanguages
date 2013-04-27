@@ -471,10 +471,13 @@ class FunCall( Expr ):
 
         # evaluate the first argument
         arg1 = self.argList[0]
-        if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
-            # needs to be evaluated twice to get to native python type
+        if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)) :
             object = arg1.eval(nt, ft)
-            evalObject = object.eval(nt,ft)
+            if not isinstance(object, int) :
+                # needs to be evaluated twice to get to native python type
+                evalObject = object.eval(nt,ft)
+            else :
+                evalObject = object
         else :
             # only needs to be evaluated once to get to native python type
             evalObject = arg1.eval(nt,ft)
