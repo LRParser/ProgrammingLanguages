@@ -3,7 +3,6 @@ import os
 import subprocess
 
 test_dir = 'test/SampleInputs'
-answers_dir = 'test/answers'
 output_dir = 'test/output'
 
 interpreter = 'python interpreterext.py'
@@ -15,5 +14,6 @@ os.makedirs(output_dir)
 
 for test in tests:
     print("Running test: %s/%s" % ( test_dir, test))
-    os.system('%s < ./%s/%s > %s/%s' % (interpreter,test_dir,
-                                       test,output_dir,test))
+    os.system('%s < %s/%s > %s/%s' % (interpreter, test_dir, test, 
+                                      output_dir, test))
+
