@@ -66,6 +66,58 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
+###### GARBAGE COLLECTION ########
+
+class Heap :
+
+    def __init__( self, maxSize=100 ) :
+        self.cellHeap = list()
+        self.cellInUseCount = 0
+        self.maxSize = maxSize
+
+    def hasSpace( self ) :
+        return (len(self.cellHeap)<self.maxSize)
+
+    def add ( self, val ) :
+        if(self.hasSpace()):
+            log.debug("Adding to heap: "+str(val))
+            self.cellHeap.append(val)
+            if(not isinstance(val,List)) :
+                raise Exception("Can only add lists to heap")
+            flattenedLength = val.flattenedLength() # No args needed since lists don't need to be able to store vars/exprs; leaving in until prof. decides if this is extra credit or not
+            log.debug("Flattened length is: "+str(flattenedLength))
+            self.cellInUseCount = self.cellInUseCount + flattenedLength
+            log.debug("Cell in use count is: "+str(self.cellInUseCount))
+                # Get length of list, and register at least this number of cells as being in use
+        else :
+            raise Exception('Heap is full')
+
+    def collectGarbage(self, nt, ft, gh) :
+        log.debug("Cells in use at start of GC: "+str(self.cellInUseCount))
+        for name in nt :
+            val = nt[name]
+            if(isinstance(val,List)) :
+                log.debug("Marking list: " + str(val) + " identified by: "+name + " so as to not be collected")
+                val.mark(nt, ft, gh)
+
+        itemsToRemove = set()
+        for val in self.cellHeap :
+            log.debug("Found in heap: "+str(val))
+            if(isinstance(val,List) and (not val.marked)) :
+                log.debug("Freeing unreferenced List: "+str(val))
+                itemsToRemove.add(val)
+            elif(isinstance(val,Number) and (not val.marked)) :
+                log.debug("Freeing unreferenced Number: "+str(val))
+                itemsToRemove.add(val)
+
+        # Sweep
+        for val in itemsToRemove :
+            listCellCount = val.flattenedLength(None,None,None)
+            self.cellInUseCount = self.cellInUseCount - listCellCount
+            self.cellHeap.remove(val)
+
+        print("Cells in use at end of GC: "+str(self.cellInUseCount))
+
 ######   CLASSES   ##################
 
 class Expr :
@@ -115,6 +167,15 @@ class Expr :
 
         return createdList
 
+    def pythonListCellCount(self, pythonList):
+        '''Returns the total number of cells in a list relevant for GC purposes; each list itself counts for 1 cell, as does each number'''
+        totalLength = 1
+        for val in inputList :
+            if(isinstance(val,list)) :
+                totalLength = totalLength + nativeLength(val)
+            else :
+                totalLength = totalLength + 1
+        return totalLength
 
 class Element( Expr ) :
     '''Lists or integers'''
@@ -179,6 +240,9 @@ class List( Element ) :
                 # Number object, just add to the list.
                 self.values.append(val)
 
+    def cellCount( self, nt, ft ) :
+        return self.pythonListCellCount(self.values)
+
     def eval( self, nt, ft ) :
 
         evaledList = copy.deepcopy(self.values)
@@ -200,24 +264,17 @@ class List( Element ) :
 class Sequence( Expr ) :
 
     def __init__( self, e, s=None ) :
-        self.values = list()
-        self.insertHead(e)
-        if(s is not None):
-            self.appendTail(s)
+        self.element = e
+        self.sequence = s
 
-    def insertHead( self , e ) :
-        self.values.insert(0,e)
-
-    def appendTail ( self, e ) :
-        self.values.append(e)
+    def numberIterator( self ) :
+        seq = self
 
     def eval( self, nt, ft ) :
         evaledSeq = list()
         for val in self.values :
             evaledSeq.append(val.eval(nt,ft))
         return evaledSeq
-        #for val in self.values :
-        #    yield val.eval(nt,ft)
 
     def display( self, nt, ft, depth=0 ) :
         if self.values is not None :
