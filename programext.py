@@ -464,7 +464,7 @@ class FunCall( Expr ):
 
         # evaluate the first argument
         arg1 = self.argList[0]
-        if isinstance(arg1, Ident) :
+        if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
             # needs to be evaluated twice to get to native python type
             object = arg1.eval(nt, ft)
             evalObject = object.eval(nt,ft)
@@ -476,7 +476,7 @@ class FunCall( Expr ):
 
         # evaluate the second argument
         arg2 = self.argList[1]
-        if isinstance(arg2, Ident) :
+        if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
             # needs to be evaluated twice to get to the native python type
             destList = arg2.eval(nt,ft)
             evalDestList = destList.eval(nt,ft)
@@ -490,6 +490,8 @@ class FunCall( Expr ):
         newList = evalDestList
         newList.insert(0, evalObject)
         return self.pythonListToList(newList)
+        #return newList
+
 
     def eval( self, nt, ft ) :
         func = getattr(self, self.name, None)
