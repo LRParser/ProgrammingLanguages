@@ -84,7 +84,7 @@ class Heap :
             self.cellHeap.append(val)
             if(not isinstance(val,List)) :
                 raise Exception("Can only add lists to heap")
-            flattenedLength = val.flattenedLength() # No args needed since lists don't need to be able to store vars/exprs; leaving in until prof. decides if this is extra credit or not
+            flattenedLength = val.cellCount() 
             log.debug("Flattened length is: "+str(flattenedLength))
             self.cellInUseCount = self.cellInUseCount + flattenedLength
             log.debug("Cell in use count is: "+str(self.cellInUseCount))
@@ -94,6 +94,8 @@ class Heap :
 
     def collectGarbage(self, nt, ft, gh) :
         log.debug("Cells in use at start of GC: "+str(self.cellInUseCount))
+
+        # Mark
         for name in nt :
             val = nt[name]
             if(isinstance(val,List)) :
@@ -182,6 +184,7 @@ class Element( Expr ) :
     def __init__( self, v=0 ) :
         print("Element ctor")
         self.value = v
+        self.marked = False
 
     def eval( self, nt, ft ) :
         return self.value.eval(nt,ft)
@@ -200,6 +203,7 @@ class Number( Element ) :
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
+        
 
 class List( Element ) :
 

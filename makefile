@@ -3,11 +3,13 @@ INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
 
 TEST_DIR=test
-TEST_OUTPUT_DIR=$(TEST_DIR)/output
-TEST_ANSWER_DIR=$(TEST_DIR)/answers
-TEST_INPUT_DIR=$(TEST_DIR)/SampleInputs
-TESTER=runtest.py
-RUN_TEST=$(CC) $(TEST_DIR)/$(TESTER)
+TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
+TEST_ANSWER_DIR1=$(TEST_DIR)/answers1
+TEST_INPUT_DIR1=$(TEST_DIR)/SampleInputs1
+TESTER1=runtest1.py
+TESTER2=runtest2.py
+RUN_TEST1=$(CC) $(TEST_DIR)/$(TESTER1)
+RUN_TEST2=$(CC) $(TEST_DIR)/$(TESTER2)
 LINT_FILE=pylint.rc
 
 
@@ -20,15 +22,23 @@ lint: clean
 
 
 # This is the idea... but it needs to be cleaned up to handle a growing number of tests
-test: clean
-	@$(RUN_TEST)
+test-part1: clean
+	@$(RUN_TEST1)
 	@echo "Checking answers"
-	for test in `ls $(TEST_INPUT_DIR)/`; do \
-		diff $(TEST_ANSWER_DIR)/$(test) $(TEST_OUTPUT_DIR)/$(test); \
+	for test in `ls $(TEST_INPUT_DIR1)/`; do \
+		diff $(TEST_ANSWER_DIR1)/$(test) $(TEST_OUTPUT_DIR1)/$(test); \
+        done
+
+test-part2: clean
+	@$(RUN_TEST2)
+	@echo "Checking answers"
+	for test in 'ls $(TEST_INPUT_DIR1)/'; do \
+		diff $(TEST_ANSWER_DIR2)/$(test) $(TEST_OUTPUT_DIR2)/$(test); \
 	done
+ 
+test: test-part1 test-part2
 
 clean:
 	@rm -f *.pyc *.out parsetab.py
-	@rm -rf $(TEST_OUTPUT_DIR)
-
-
+	@rm -rf $(TEST_OUTPUT_DIR1)
+	@rm -rf $(TEST_OUTPUT_DIR2)

@@ -2,9 +2,9 @@ import sys
 import os
 import subprocess
 
-test_dir = 'test/SampleInputs'
-answers_dir = 'test/answers'
-output_dir = 'test/output'
+test_dir = 'test/SampleInputs2'
+answers_dir = 'test/answers2'
+output_dir = 'test/output2'
 
 interpreter = 'python interpreterext.py'
 
