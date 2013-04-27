@@ -23,8 +23,8 @@ lint: clean
 test: clean
 	@$(RUN_TEST)
 	@echo "Checking answers"
-	@for test in `ls -1 $(TEST_INPUT_DIR)/`; do \
-		diff $(TEST_ANSWER_DIR)/${test} $(TEST_OUTPUT_DIR)/${test}; \
+	for test in `ls $(TEST_INPUT_DIR)/`; do \
+		diff $(TEST_ANSWER_DIR)/$(test) $(TEST_OUTPUT_DIR)/$(test); \
 	done
 
 clean:
