@@ -1,7 +1,8 @@
-CC=python
+PYTHON=python
 INTERPRET=interpreterext.py
+INTERPRETGC=interpreterextgc.py
 PROGRAMEXT=programext.py
-GC=programextgc.py
+PROGRAMEXTGC=programextgc.py
 
 TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
@@ -14,8 +15,8 @@ TEST_INPUT_DIR2=$(TEST_DIR)/SampleInputs2
 
 TESTER1=runtest1.py
 TESTER2=runtest2.py
-RUN_TEST1=$(CC) $(TEST_DIR)/$(TESTER1)
-RUN_TEST2=$(CC) $(TEST_DIR)/$(TESTER2)
+RUN_TEST1=$(PYTHON) $(TEST_DIR)/$(TESTER1)
+RUN_TEST2=$(PYTHON) $(TEST_DIR)/$(TESTER2)
 LINT_FILE=pylint.rc
 
 
@@ -31,16 +32,13 @@ lint: clean
 test-part1: clean
 	@$(RUN_TEST1)
 	@echo "Checking answers"
-	for test in `ls $(TEST_INPUT_DIR1)/`; do \
-		diff $(TEST_ANSWER_DIR1)/$(test) $(TEST_OUTPUT_DIR1)/$(test); \
-        done
+	@diff $(TEST_ANSWER_DIR1) $(TEST_OUTPUT_DIR1)
 
 test-part2: clean
 	@$(RUN_TEST2)
 	@echo "Checking answers"
-	for test in 'ls $(TEST_INPUT_DIR2)/'; do \
-		diff $(TEST_ANSWER_DIR2)/$(test) $(TEST_OUTPUT_DIR2)/$(test); \
-	done
+	@diff $(TEST_ANSWER_DIR2) $(TEST_OUTPUT_DIR2)
+
 
 test: test-part1 test-part2
 
@@ -53,14 +51,13 @@ view-part1 : clean
 	@more $(INTERPRET) $(PROGRAMEXT)
 
 view-part2 : clean
-	@more $(INTERPRET) $(GC)
+	@more $(INTERPRETGC) $(PROGRAMEXTGC)
 
 
 build : clean
 
 run-part1: clean
-	@$(CC) $(INTERPRET)
+	@$(PYTHON) $(INTERPRET)
 
 run-part2: clean
-	#FIX ME, needs to be interpretgc.py
-	@$(CC) $(GC)
+	@$(PYTHON) $(INTERPRETGC)

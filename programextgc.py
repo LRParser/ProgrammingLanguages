@@ -107,9 +107,41 @@ class MiniLangUtils :
 
         return createdList
     
-
-
 ######  GARBAGE COLLECTION ##########
+
+class ConsCell:
+    def __init__(self):
+        self.__car = None
+        self.__cdr = None
+
+    @property
+    def car(self):
+        return self.__car
+
+    @property
+    def cdr(self):
+        return self.__cdr
+
+    def __check(self, val):
+        "Meant for internal use only"
+        if val is None:
+            pass
+        elif isinstance(val, Number):
+            pass
+        elif isinstance(val, ConsCell):
+            pass
+        else:
+            raise Exception("Invalid ConsCell")
+
+    @car.setter
+    def car(self, val):
+        self.__check(val)
+        self.__car = val
+
+    @cdr.setter
+    def cdr(self, val):
+        self.__check(val)
+        self.__cdr = val
 
 class Heap :
 
@@ -792,3 +824,4 @@ def evalIdent(ident, nt, ft):
         return MiniLangUtils.pythonListToList(ident)
     else:
         return ident
+
