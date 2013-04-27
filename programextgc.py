@@ -73,6 +73,40 @@ tabstop = '  ' # 2 spaces
 
 ######  GARBAGE COLLECTION ##########
 
+class ConsCell:
+    def __init__(self):
+        self.__car = None
+        self.__cdr = None
+
+    @property
+    def car(self):
+        return self.__car
+
+    @property
+    def cdr(self):
+        return self.__cdr
+
+    def __check(self, val):
+        "Meant for internal use only"
+        if val is None:
+            pass
+        elif isinstance(val, Number):
+            pass
+        elif isinstance(val, ConsCell):
+            pass
+        else:
+            raise Exception("Invalid ConsCell")
+
+    @car.setter
+    def car(self, val):
+        self.__check(val)
+        self.__car = val
+
+    @cdr.setter
+    def cdr(self, val):
+        self.__check(val)
+        self.__cdr = val
+
 class Heap :
 
     def __init__( self, maxSize=100 ) :
@@ -90,7 +124,7 @@ class Heap :
             if(not isinstance(val,List)) :
                 raise Exception("Can only add lists to heap")
             nativeList = val.eval(nt, ft)
-            cellCount = val.cellCount(nt,ft) 
+            cellCount = val.cellCount(nt,ft)
             print("Cell count is: "+str(flattenedLength))
             self.cellInUseCount = self.cellInUseCount + flattenedLength
             print("Cell in use count is: "+str(self.cellInUseCount))
@@ -182,7 +216,7 @@ class Expr :
         createdList = List(outerSeq)
 
         return createdList
-    
+
 
 class Element( Expr ) :
     '''Lists or integers'''
@@ -266,7 +300,7 @@ class List( Element ) :
                     evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
-    
+
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
                 val.display(nt,ft,depth)
@@ -468,9 +502,9 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
 
-        # Validation complete   
+        # Validation complete
         return BuiltIns.car(nt,ft,listPassed)
-    
+
     def cdr( self, nt, ft):
 
         listArg = self.argList[0]
