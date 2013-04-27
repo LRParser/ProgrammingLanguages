@@ -479,6 +479,8 @@ class FunCall( Expr ):
         if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
             # needs to be evaluated twice to get to the native python type
             destList = arg2.eval(nt,ft)
+            if isinstance(destList, int) :
+                raise Exception("Can only cons an object onto a List")
             evalDestList = destList.eval(nt,ft)
         else :
             evalDestList = arg2.eval(nt,ft)
