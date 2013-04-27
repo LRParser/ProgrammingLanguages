@@ -309,6 +309,10 @@ def p_element_element_LISTCONCATENATOR_list(p):
     #    print("p_list_element_LISTCONCATENATOR element")
     p[0] = Concat(p[1],p[3])
 
+def p_element_element_LISTCONCATENATOR_ident(p):
+    'element : element LISTCONCATENATOR IDENT'
+    p[0] = Concat(p[1], p[3])
+
 
 # Error rule for syntax errors
 def p_error( p ):

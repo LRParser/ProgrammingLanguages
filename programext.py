@@ -315,16 +315,27 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft) :
-        lhsEval = self.lhs.eval(nt,ft)
-        rhsEval = self.rhs.eval(nt,ft)
-        if(not isinstance(lhsEval,List) or not isinstance(rhsEval,List)) :
-            raise Exception("Both elements applied for List concatenation using || operator must be lists")
-        lhsListEval = lhsEval.eval(nt,ft)
-        print("lhsListEval")
-        print(lhsListEval)
-        rhsListEval = rhsEval.eval(nt,ft)
-        print("rhsListEval")
-        print(rhsListEval)
+        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List)) :
+            raise Exception("List concatenation requires two Lists")
+        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List)) :
+            raise Exception("List concatenation requires two Lists")
+
+        if isinstance(self.lhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get the native python list
+            lhsList = self.lhs.eval(nt, ft)
+            lhsListEval = lhsList.eval(nt, ft)
+        else :
+            # only requires one-level of evaluation to get to the native python list
+            lhsListEval = self.lhs.eval(nt, ft)
+
+        if isinstance(self.rhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get the native python list
+            rhsList = self.rhs.eval(nt, ft)
+            rhsListEval = rhsList.eval(nt, ft)
+        else :
+            # only requires one-level evaluation to get to the native python list
+            rhsListEval = self.rhs.eval(nt, ft)
+
         extendedList = lhsListEval + rhsListEval
         print("Extended")
         print(extendedList)
