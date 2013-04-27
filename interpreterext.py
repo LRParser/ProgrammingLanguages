@@ -130,7 +130,7 @@ def p_program( p ) :
     P.eval()
     P.dump()
     print "Running garbage collector"
-    P.collectGarbage()
+    #P.collectGarbage()
     print "Garbage collector run"
 
 def p_stmt_list( p ) :

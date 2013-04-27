@@ -420,28 +420,28 @@ class FunCall( Expr ) :
             raise Exception("Cons function requires exactly 2 arguments")
 
         atom = self.argList[0]
-        evalAtom = atom.eval(nt,ft,gh)
-        listToAddAtomTo = self.argList[1].eval(nt,ft,gh)
-        print("atom is: "+str(atom))
-        print("listToAddAtomTo is: "+str(listToAddAtomTo))
-        
-        if not(isinstance(listToAddAtomTo,List)) :
-            raise Exception("Can only cons an atom onto a List")
+        listToAddTo = self.argList[1]
 
+        if(isinstance(atom,Ident) or isinstance(atom,FunCall)) :
+            atom = self.eval(nt,ft,gh)
+       
+        if(isinstance(listToAddTo,Ident) or isinstance(listToAddTo,FunCall)) :
+            listToAddTo = listToAddTo.eval(nt,ft,gh)
+ 
         # Check if we have space to copy the passed list; if not, run GC
-        sourceSeq = listToAddAtomTo.sequence
+        sourceSeq = listToAddTo.sequence
         if(sourceSeq.sequence is not None) :
             wrapSeq = Sequence(sourceSeq.element,sourceSeq.sequence)
         else :
             wrapSeq = Sequence(sourceSeq.element)
-        newSeq = Sequence(evalAtom,wrapSeq) 
+        newSeq = Sequence(atom,wrapSeq) 
         newList = List(newSeq)
         print("Created list: "+str(newList))
         # Add the list pointer to the heap
         gh.add(newList)
         # Add the contents of list to the heap
-        for nVal in newList.numberIterator() :
-            gh.add(nVal)
+        #for nVal in newList.numberIterator() :
+            #gh.add(nVal)
 
         # Note: Only GC'ing creating lists for now, need to investigate what other GC scenarios exist
 
