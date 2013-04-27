@@ -93,16 +93,22 @@ class Expr :
         outerSeq = None
         i = 0
         while( i < listLen) :
-            print(str(i))
+
             val = inputList[i]
 
-            currentElem = None
+            # check to see if the current element is a native python type
 
-            if(isinstance(val,Number) or isinstance(val,int)) :
+            if isinstance(val,int) :
+                # it's an int, so convert to a Number
                 currentElem = Number(val)
 
-            elif(isinstance(val,List)) :
-                currentElem = pythonListToList(inputList)
+            elif isinstance(val, list) :
+                # it's a list, so convert to a List
+                currentElem = self.pythonListToList(val)
+
+            else :
+                # it's not a native python type
+                currentElem = val
 
             innerSeq = Sequence(currentElem)
 
@@ -110,7 +116,9 @@ class Expr :
                 outerSeq = Sequence(outerSeq,innerSeq)
             else :
                 outerSeq = Sequence(innerSeq)
+
             i = (i+1)
+
         createdList = List(outerSeq)
 
         return createdList
@@ -456,7 +464,7 @@ class FunCall( Expr ):
         # then insert evalObject at the head of the list
         newList = evalDestList
         newList.insert(0, evalObject)
-        return newList
+        return self.pythonListToList(newList)
 
     def eval( self, nt, ft ) :
         func = getattr(self, self.name, None)
