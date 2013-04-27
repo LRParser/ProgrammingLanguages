@@ -167,18 +167,14 @@ class List( Element ) :
                         self.unPackSequence(y)
                     # Check for a nested list..
                     elif (isinstance(y,List)):
-                        # Simply loop through all values adding them
-                        # to the list object.
-                        for l in y.values:
-                            self.values.append(l)
+                        # Append the nested list..
+                        self.values.append(y)
                     else:
                         # Number object, just add to the list.
                         self.values.append(y)
             elif(isinstance(val,List)):
-                for l in val.values:
-                    # Simply loop through all values adding them
-                    # to the list object.
-                    self.values.append(l)
+                # Append the nested list..
+                self.values.append(val)
             else:
                 # Number object, just add to the list.
                 self.values.append(val)
@@ -649,7 +645,7 @@ class Program :
     def dump( self ) :
         print "Dump of Symbol Table"
         for k in self.nameTable :
-            if(isinstance(self.nameTable[k],List)):
+            if(isinstance(self.nameTable[k],List) or isinstance(self.nameTable[k],FunCall)):
                 print("Print List")
                 print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
             else :
