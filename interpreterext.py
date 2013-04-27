@@ -309,8 +309,8 @@ def p_element_element_LISTCONCATENATOR_list(p):
     #    print("p_list_element_LISTCONCATENATOR element")
     p[0] = Concat(p[1],p[3])
 
-def p_element_element_LISTCONCATENATOR_ident(p):
-    'element : element LISTCONCATENATOR IDENT'
+def p_element_element_LISTCONCATENATOR_fact(p):
+    'element : element LISTCONCATENATOR fact'
     p[0] = Concat(p[1], p[3])
 
 
