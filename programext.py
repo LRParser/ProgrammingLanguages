@@ -321,12 +321,13 @@ class Concat( Expr ) :
             raise Exception("List concatenation requires two Lists")
 
         if (isinstance(self.lhs, Ident)):
-            # Ident only needs one eval.
-            lhsListEval = self.lhs.eval(nt, ft)
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
+            lhsIdent = self.lhs.eval(nt, ft)
+            lhsListEval = lhsIdent.eval(nt, ft)
             if not isinstance(lhsListEval, list) :
                 raise Exception("Identity must be a List for || operator")
         elif isinstance(self.lhs, FunCall):
-            # since it's an Ident or a FunCall, it needs two-level evaluation to get the native python list
+            # since it's a FunCall, it needs two-level evaluation to get the native python list
             lhsFunc = self.lhs.eval(nt, ft)
             lhsListEval = lhsFunc.eval(nt, ft)
             if not isinstance(lhsListEval, list) :
@@ -336,9 +337,10 @@ class Concat( Expr ) :
             lhsListEval = self.lhs.eval(nt, ft)
 
         if (isinstance(self.rhs, Ident)) :
-            # Ident only needs one eval.
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
             rhsIdent = self.rhs.eval(nt, ft)
-            if not isinstance(rhsIdent, list) :
+            rhsListEval = rhsIdent.eval(nt, ft)
+            if not isinstance(rhsListEval, list) :
                 raise Exception("Identity must be a List for || operator")
         elif isinstance(self.rhs, FunCall):
         # since it's an Ident or a FunCall, it needs two-level evaluation to get the native python list
