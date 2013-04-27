@@ -106,7 +106,7 @@ class MiniLangUtils :
         createdList = List(outerSeq)
 
         return createdList
-    
+
 ######  GARBAGE COLLECTION ##########
 
 class ConsCell:
@@ -122,8 +122,8 @@ class ConsCell:
     def cdr(self):
         return self.__cdr
 
-    def __check(self, val):
-        "Meant for internal use only"
+    @staticmethod
+    def check_car( val):
         if val is None:
             pass
         elif isinstance(val, Number):
@@ -131,17 +131,28 @@ class ConsCell:
         elif isinstance(val, ConsCell):
             pass
         else:
-            raise Exception("Invalid ConsCell")
+            raise Exception("Invalid car")
 
-    @car.setter
-    def car(self, val):
-        self.__check(val)
-        self.__car = val
+    @staticmethod
+    def check_cdr(val):
+        '''cdr can't end in numbers... it must be a ConsCell.  This is
+        consistent with Lisp.
+        '''
+        if val is None:
+            pass
+        elif isinstance(val, ConsCell):
+            pass
+        else:
+            raise Exception("Invalid cdr")
 
-    @cdr.setter
-    def cdr(self, val):
-        self.__check(val)
-        self.__cdr = val
+    def __to_string(self, val):
+        if val is None:
+            return "nil"
+        else:
+            return str(val)
+
+    def __str__(self):
+        return "( %s %s )" % (self.__to_string(self.car), self.__to_string(self.cdr))
 
 class Heap :
 
@@ -233,8 +244,12 @@ class Number( Element ) :
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
 
+    def __str__(self):
+        return "%s" % self.value
+
     def mark( self ) :
         self.marked = True
+
 
 class List( Element ) :
 
@@ -278,7 +293,7 @@ class List( Element ) :
             return list(self.sequence.eval(nt,ft))
         else :
             return list()
-    
+
     def display( self, nt, ft, depth=0 ) :
         if(self.sequence is not None) :
             self.sequence.display(nt,ft,depth)
@@ -461,6 +476,20 @@ class BuiltIns :
         return listPassed.sequence.element
 
     @staticmethod
+
+    def cons_josh(x, y) :
+        ConsCell.check_car(x)
+        ConsCell.check_cdr(y)
+
+        #Get new cons cell
+        # This should come from heap.alloc() or something
+        c = ConsCell()
+
+        c.car = x
+        c.cdr = y
+
+        return c
+
     def cons(atom, listPassed, gh) :
 
         if(isinstance(atom,Number)) :
@@ -500,9 +529,9 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
 
-        # Validation complete   
+        # Validation complete
         return BuiltIns.car(listPassed)
-    
+
     def cdr( self, nt, ft):
 
         listArg = self.argList[0]
@@ -823,4 +852,3 @@ def evalIdent(ident, nt, ft):
         return MiniLangUtils.pythonListToList(ident)
     else:
         return ident
-
