@@ -315,31 +315,36 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft) :
-        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List)) :
+        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List) or isinstance(self.lhs, FunCall)) :
             raise Exception("List concatenation requires two Lists")
-        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List)) :
+        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List) or isinstance(self.rhs, FunCall)) :
             raise Exception("List concatenation requires two Lists")
 
-        if isinstance(self.lhs, Ident) :
-            # since it's an Ident, it needs two-level evaluation to get the native python list
+        if (isinstance(self.lhs, Ident) or isinstance(self.lhs, FunCall)) :
+            # since it's an Ident or a FunCall, it needs two-level evaluation to get the native python list
             lhsList = self.lhs.eval(nt, ft)
             lhsListEval = lhsList.eval(nt, ft)
+            if isinstance(self.lhs, FunCall) :
+                # verify that the function call returned a list
+                if not isinstance(lhsListEval, list) :
+                    raise Exception("Function must return a List for || operator")
         else :
             # only requires one-level of evaluation to get to the native python list
             lhsListEval = self.lhs.eval(nt, ft)
 
-        if isinstance(self.rhs, Ident) :
-            # since it's an Ident, it needs two-level evaluation to get the native python list
+        if (isinstance(self.rhs, Ident) or isinstance(self.rhs, FunCall)) :
+            # since it's an Ident or a FunCall, it needs two-level evaluation to get the native python list
             rhsList = self.rhs.eval(nt, ft)
             rhsListEval = rhsList.eval(nt, ft)
+            if isinstance(self.rhs, FunCall) :
+                # verify that the funcall returned a list
+                if not isinstance(rhsListEval, list) :
+                    raise Exception("Function must return a List for || operator")
         else :
             # only requires one-level evaluation to get to the native python list
             rhsListEval = self.rhs.eval(nt, ft)
 
         extendedList = lhsListEval + rhsListEval
-        print("Extended")
-        print(extendedList)
-        print(len(extendedList))
         return self.pythonListToList(extendedList)
 
 
