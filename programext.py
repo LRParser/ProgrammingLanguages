@@ -422,9 +422,13 @@ class FunCall( Expr ) :
         atom = self.argList[0]
         listToAddTo = self.argList[1]
 
+        if(isinstance(atom,int)) :
+            atom = Number(atom)
+
         if(isinstance(atom,Ident) or isinstance(atom,FunCall)) :
-            atom = self.eval(nt,ft,gh)
-       
+            atom = atom.eval(nt,ft,gh)
+            atom = Number(atom)      
+ 
         if(isinstance(listToAddTo,Ident) or isinstance(listToAddTo,FunCall)) :
             listToAddTo = listToAddTo.eval(nt,ft,gh)
  
