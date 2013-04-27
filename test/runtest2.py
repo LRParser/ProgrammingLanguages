@@ -6,7 +6,7 @@ test_dir = 'test/SampleInputs2'
 answers_dir = 'test/answers2'
 output_dir = 'test/output2'
 
-interpreter = 'python interpreterext.py'
+interpreter = 'python interpreterextgc.py'
 
 tests = os.listdir(test_dir)
 

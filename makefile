@@ -6,6 +6,11 @@ TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
 TEST_ANSWER_DIR1=$(TEST_DIR)/answers1
 TEST_INPUT_DIR1=$(TEST_DIR)/SampleInputs1
+
+TEST_OUTPUT_DIR2=$(TEST_DIR)/output2
+TEST_ANSWER_DIR2=$(TEST_DIR)/answers2
+TEST_INPUT_DIR2=$(TEST_DIR)/SampleInputs2
+
 TESTER1=runtest1.py
 TESTER2=runtest2.py
 RUN_TEST1=$(CC) $(TEST_DIR)/$(TESTER1)
@@ -32,7 +37,7 @@ test-part1: clean
 test-part2: clean
 	@$(RUN_TEST2)
 	@echo "Checking answers"
-	for test in 'ls $(TEST_INPUT_DIR1)/'; do \
+	for test in 'ls $(TEST_INPUT_DIR2)/'; do \
 		diff $(TEST_ANSWER_DIR2)/$(test) $(TEST_OUTPUT_DIR2)/$(test); \
 	done
  

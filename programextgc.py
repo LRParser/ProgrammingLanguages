@@ -66,60 +66,6 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
-###### GARBAGE COLLECTION ########
-
-class Heap :
-
-    def __init__( self, maxSize=100 ) :
-        self.cellHeap = list()
-        self.cellInUseCount = 0
-        self.maxSize = maxSize
-
-    def hasSpace( self ) :
-        return (len(self.cellHeap)<self.maxSize)
-
-    def add ( self, val ) :
-        if(self.hasSpace()):
-            log.debug("Adding to heap: "+str(val))
-            self.cellHeap.append(val)
-            if(not isinstance(val,List)) :
-                raise Exception("Can only add lists to heap")
-            flattenedLength = val.cellCount() 
-            log.debug("Flattened length is: "+str(flattenedLength))
-            self.cellInUseCount = self.cellInUseCount + flattenedLength
-            log.debug("Cell in use count is: "+str(self.cellInUseCount))
-                # Get length of list, and register at least this number of cells as being in use
-        else :
-            raise Exception('Heap is full')
-
-    def collectGarbage(self, nt, ft, gh) :
-        log.debug("Cells in use at start of GC: "+str(self.cellInUseCount))
-
-        # Mark
-        for name in nt :
-            val = nt[name]
-            if(isinstance(val,List)) :
-                log.debug("Marking list: " + str(val) + " identified by: "+name + " so as to not be collected")
-                val.mark(nt, ft, gh)
-
-        itemsToRemove = set()
-        for val in self.cellHeap :
-            log.debug("Found in heap: "+str(val))
-            if(isinstance(val,List) and (not val.marked)) :
-                log.debug("Freeing unreferenced List: "+str(val))
-                itemsToRemove.add(val)
-            elif(isinstance(val,Number) and (not val.marked)) :
-                log.debug("Freeing unreferenced Number: "+str(val))
-                itemsToRemove.add(val)
-
-        # Sweep
-        for val in itemsToRemove :
-            listCellCount = val.flattenedLength(None,None,None)
-            self.cellInUseCount = self.cellInUseCount - listCellCount
-            self.cellHeap.remove(val)
-
-        print("Cells in use at end of GC: "+str(self.cellInUseCount))
-
 ######   CLASSES   ##################
 
 class Expr :
@@ -147,16 +93,22 @@ class Expr :
         outerSeq = None
         i = 0
         while( i < listLen) :
-            print(str(i))
+
             val = inputList[i]
 
-            currentElem = None
+            # check to see if the current element is a native python type
 
-            if(isinstance(val,Number) or isinstance(val,int)) :
+            if isinstance(val,int) :
+                # convert to Number
                 currentElem = Number(val)
 
-            elif(isinstance(val,List)) :
-                currentElem = pythonListToList(inputList)
+            elif isinstance(val, list) :
+                # convert to List
+                currentElem = self.pythonListToList(val)
+
+            else :
+                # it's not a native python type
+                currentElem = val
 
             innerSeq = Sequence(currentElem)
 
@@ -165,26 +117,17 @@ class Expr :
             else :
                 outerSeq = Sequence(innerSeq)
             i = (i+1)
+
         createdList = List(outerSeq)
 
         return createdList
 
-    def pythonListCellCount(self, pythonList):
-        '''Returns the total number of cells in a list relevant for GC purposes; each list itself counts for 1 cell, as does each number'''
-        totalLength = 1
-        for val in inputList :
-            if(isinstance(val,list)) :
-                totalLength = totalLength + nativeLength(val)
-            else :
-                totalLength = totalLength + 1
-        return totalLength
 
 class Element( Expr ) :
     '''Lists or integers'''
     def __init__( self, v=0 ) :
         print("Element ctor")
         self.value = v
-        self.marked = False
 
     def eval( self, nt, ft ) :
         return self.value.eval(nt,ft)
@@ -203,7 +146,6 @@ class Number( Element ) :
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
-        
 
 class List( Element ) :
 
@@ -244,19 +186,24 @@ class List( Element ) :
                 # Number object, just add to the list.
                 self.values.append(val)
 
-    def cellCount( self, nt, ft ) :
-        return self.pythonListCellCount(self.values)
-
     def eval( self, nt, ft ) :
 
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
-            evaledList[i] = evaledList[i].eval(nt,ft)
+            if evaledList[i] is not None:
+                if isinstance(evaledList[i], FunCall) :
+                    funCallValue = evaledList[i].eval(nt, ft)
+                    if isinstance(funCallValue, List) :
+                        evaledList[i] = funCallValue.eval(nt, ft)
+                    else :
+                        evaledList[i] = funCallValue
+                else :
+                    evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
-            val.display(nt,ft,depth+1)
+                val.display(nt,ft,depth+1)
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
@@ -277,13 +224,15 @@ class Sequence( Expr ) :
         self.values.insert(0,e)
 
     def appendTail ( self, e ) :
-        self.values.append(e)    
+        self.values.append(e)
 
     def eval( self, nt, ft ) :
         evaledSeq = list()
         for val in self.values :
             evaledSeq.append(val.eval(nt,ft))
         return evaledSeq
+        #for val in self.values :
+        #    yield val.eval(nt,ft)
 
     def display( self, nt, ft, depth=0 ) :
         if self.values is not None :
@@ -372,21 +321,46 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft) :
-        lhsEval = self.lhs.eval(nt,ft)
-        rhsEval = self.rhs.eval(nt,ft)
-        if(not isinstance(lhsEval,List) or not isinstance(rhsEval,List)) :
-            raise Exception("Both elements applied for List concatenation using || operator must be lists")
-        lhsListEval = lhsEval.eval(nt,ft)
-        print("lhsListEval")
-        print(lhsListEval)
-        rhsListEval = rhsEval.eval(nt,ft)
-        print("rhsListEval")
-        print(rhsListEval)
+        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List) or isinstance(self.lhs, FunCall)) :
+            raise Exception("List concatenation requires two Lists")
+        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List) or isinstance(self.rhs, FunCall)) :
+            raise Exception("List concatenation requires two Lists")
+
+        if isinstance(self.lhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
+            lhsIdent = self.lhs.eval(nt, ft)
+            lhsListEval = lhsIdent.eval(nt, ft)
+            if not isinstance(lhsListEval, list) :
+                raise Exception("Identity must be a list for || operator")
+        elif isinstance(self.lhs, FunCall) :
+            # since it's a FunCall, it needs two-level evaluation to get to the native python list
+            lhsFunc = self.lhs.eval(nt, ft)
+            lhsListEval = lhsFunc.eval(nt, ft)
+            if not isinstance(lhsListEval, list) :
+                raise Exception("Function must return a List for || operator")
+        else :
+            # only requires one-level of evaluation to get to the native python list
+            lhsListEval = self.lhs.eval(nt, ft)
+
+        if isinstance(self.rhs, Ident) :
+            # since it's an Ident, it needs two-level evaluation to get to the native python list
+            rhsIdent = self.rhs.eval(nt, ft)
+            rhsListEval = rhsIdent.eval(nt, ft)
+            if not isinstance(rhsListEval, list) :
+                raise Exception("Identity must be a list for || operator")
+        elif isinstance(self.rhs, FunCall) :
+            # since it's a FunCall, it needs two-level evaluation to get to the native python list
+            rhsFunc = self.rhs.eval(nt, ft)
+            rhsListEval = rhsFunc.eval(nt, ft)
+            if not isinstance(rhsListEval, list) :
+                raise Exception("Function must return a List for || operator")
+        else :
+            # only requires one-level of evaluation to get to the native python list
+            rhsListEval = self.rhs.eval(nt, ft)
+
         extendedList = lhsListEval + rhsListEval
-        print("Extended")
-        print(extendedList)
-        print(len(extendedList))
         return self.pythonListToList(extendedList)
+
 
 
     def display( self, nt, ft, depth=0 ) :
@@ -471,7 +445,8 @@ class FunCall( Expr ):
         "Returns 1 if a list, otherwise 0"
 
         try:
-            if isinstance(self.argList[0].eval(nt,ft), List):
+            evaledArg = self.argList[0].eval(nt,ft)
+            if isinstance(evaledArg, List) or isinstance(evaledArg, list) :
                 return 1
             else:
                 return 0
@@ -496,7 +471,7 @@ class FunCall( Expr ):
 
         # evaluate the first argument
         arg1 = self.argList[0]
-        if isinstance(arg1, Ident) :
+        if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
             # needs to be evaluated twice to get to native python type
             object = arg1.eval(nt, ft)
             evalObject = object.eval(nt,ft)
@@ -508,9 +483,11 @@ class FunCall( Expr ):
 
         # evaluate the second argument
         arg2 = self.argList[1]
-        if isinstance(arg2, Ident) :
+        if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
             # needs to be evaluated twice to get to the native python type
             destList = arg2.eval(nt,ft)
+            if isinstance(destList, int) :
+                raise Exception("Can only cons an object onto a List")
             evalDestList = destList.eval(nt,ft)
         else :
             evalDestList = arg2.eval(nt,ft)
@@ -521,7 +498,9 @@ class FunCall( Expr ):
         # then insert evalObject at the head of the list
         newList = evalDestList
         newList.insert(0, evalObject)
-        return newList
+        return self.pythonListToList(newList)
+        #return newList
+
 
     def eval( self, nt, ft ) :
         func = getattr(self, self.name, None)
