@@ -191,12 +191,19 @@ class List( Element ) :
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
             if evaledList[i] is not None:
-                evaledList[i] = evaledList[i].eval(nt,ft)
+                if isinstance(evaledList[i], FunCall) :
+                    funCallValue = evaledList[i].eval(nt, ft)
+                    if isinstance(funCallValue, List) :
+                        evaledList[i] = funCallValue.eval(nt, ft)
+                    else :
+                        evaledList[i] = funCallValue
+                else :
+                    evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
-            val.display(nt,ft,depth+1)
+                val.display(nt,ft,depth+1)
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
