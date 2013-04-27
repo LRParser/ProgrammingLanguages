@@ -503,7 +503,7 @@ class FunCall( Expr ):
 
 
     def eval( self, nt, ft ) :
-        func = getattr(self, self.name, None)
+        func = getattr(BuiltIns, self.name, None)
         # Is this function defined in this class?
         if func:
             # It is, so call it (like car, cdr, etc...)

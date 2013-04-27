@@ -50,6 +50,7 @@ import sys
 import copy
 import itertools
 import logging
+from cellCount import *
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
@@ -66,9 +67,65 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
+##### General Helper Methods ########
+
+
+
 ######  GARBAGE COLLECTION ##########
 
-# ToDo
+class Heap :
+
+    def __init__( self, maxSize=100 ) :
+        self.cellHeap = list()
+        self.cellInUseCount = 0
+        self.maxSize = maxSize
+
+    def hasSpace( self ) :
+        return (len(self.cellHeap)<self.maxSize)
+
+    def add ( self, val ) :
+        if(self.hasSpace()):
+            print("Adding to heap: "+str(val))
+            self.cellHeap.append(val)
+            if(not isinstance(val,List)) :
+                raise Exception("Can only add lists to heap")
+            nativeList = val.eval(nt, ft)
+            cellCount = val.cellCount(nt,ft) 
+            print("Cell count is: "+str(flattenedLength))
+            self.cellInUseCount = self.cellInUseCount + flattenedLength
+            print("Cell in use count is: "+str(self.cellInUseCount))
+        else :
+            # Need to collect garbage
+            self.collectGarbage(nt, ft)
+        if not(self.hasSpace()) :
+            # We failed to reclaim enough space; raise Exception
+            raise Exception('Heap is full and garbage collection failed to reclaim space')
+
+    def collectGarbage(self, nt, ft) :
+        print("Cells in use at start of GC: "+str(self.cellInUseCount))
+        for name in nt :
+            val = nt[name]
+            if(isinstance(val,List)) :
+                print("Marking list: " + str(val) + "identified by: "+name + " so as to not be collected")
+                val.mark(nt, ft)
+
+        itemsToRemove = set()
+        for val in self.cellHeap :
+            print("Found in heap: "+str(val))
+            if(isinstance(val,List) and (not val.marked)) :
+                print("Freeing unreferenced List: "+str(val))
+                itemsToRemove.add(val)
+            elif(isinstance(val,Number) and (not val.marked)) :
+                print("Freeing unreferenced Number: "+str(val))
+                itemsToRemove.add(val)
+
+        # Sweep
+        for val in itemsToRemove :
+            listCellCount = val.flattenedLength(None,None,None)
+            self.cellInUseCount = self.cellInUseCount - listCellCount
+            self.cellHeap.remove(val)
+
+        print("Cells in use at end of GC: "+str(self.cellInUseCount))
 
 ######   CLASSES   ##################
 
@@ -125,12 +182,11 @@ class Expr :
         createdList = List(outerSeq)
 
         return createdList
-
+    
 
 class Element( Expr ) :
     '''Lists or integers'''
     def __init__( self, v=0 ) :
-        print("Element ctor")
         self.value = v
 
     def eval( self, nt, ft ) :
@@ -143,6 +199,7 @@ class Number( Element ) :
     '''Just integers'''
 
     def __init__( self, v=0 ) :
+        self.marked = False
         self.value = v
 
     def eval( self, nt, ft ) :
@@ -155,11 +212,15 @@ class List( Element ) :
 
     def __init__( self, s=None ) :
         self.values = list()
+        self.marked = False
         if(s is not None):
             if (isinstance(s,Sequence)) :
                 self.unPackSequence(s)
             else :
                 self.values.append(s)
+
+    def registerWithHeap(self, gh) :
+        gh.add(self)
 
     def unPackSequence(self,seq):
         """ Loops through the sequence, pulling out
@@ -205,9 +266,10 @@ class List( Element ) :
                     evaledList[i] = evaledList[i].eval(nt,ft)
         return evaledList
 
+    
     def display( self, nt, ft, depth=0 ) :
         for val in self.values :
-                val.display(nt,ft,depth+1)
+                val.display(nt,ft,depth)
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
@@ -372,6 +434,11 @@ class Concat( Expr ) :
         self.lhs.display( nt, ft, depth+1 )
         self.rhs.display( nt, ft, depth+1 )
 
+class BuiltIns :
+
+    @staticmethod
+    def car(nt, ft, listPassed) :
+        return listPassed.values[0]
 
 
 
@@ -386,27 +453,24 @@ class FunCall( Expr ):
     def car( self, nt, ft ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
-
         listArg = self.argList[0]
         listPassed = None
         if(isinstance(listArg,Ident)) :
             # We were passed an Ident
-            listPassed = self.argList[0].eval(nt,ft)
+            listPassed = listArg.eval(nt,ft)
         elif(isinstance(listArg,List)) :
             # We were passed a List object
             listPassed = listArg
+        elif(isinstance(listArg,FunCall)) :
+            # We are getting car of the return value of a function
+            listPassed = listArg.eval(nt,ft)
 
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
 
-        # We have a parsed List object. Call eval to get a native list
-        evaledList = listPassed.eval(nt,ft)
-
-        if(len(evaledList) < 1) :
-            raise Exception("Can't call car on empty List")
-
-        return evaledList[0]
-
+        # Validation complete   
+        return BuiltIns.car(nt,ft,listPassed)
+    
     def cdr( self, nt, ft):
 
         listArg = self.argList[0]
@@ -423,13 +487,11 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call cdr on List")
 
-        # We have a parsed List object. Call eval to get a native list
-        evaledList = listPassed.eval(nt,ft)
 
-        if(len(evaledList) < 1) :
+        if(len(listPassed.values) < 1) :
             raise Exception("Can't call cdr on empty List")
 
-        return self.pythonListToList(evaledList[1:])
+        return listPassed.values[1:]
 
     def nullp( self, nt, ft ):
         'Returns 1 if the List is Null, otherwise 0'
@@ -507,6 +569,7 @@ class FunCall( Expr ):
 
 
     def eval( self, nt, ft ) :
+
         func = getattr(self, self.name, None)
         # Is this function defined in this class?
         if func:
@@ -703,11 +766,8 @@ class Program :
     def dump( self ) :
         print "Dump of Symbol Table"
         for k in self.nameTable :
-            if(isinstance(self.nameTable[k],List) or isinstance(self.nameTable[k],FunCall)):
-                print("Print List")
-                print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
-            else :
-                print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
+            print "  %s -> " % ( str(k) )
+            self.nameTable[k].display(self.nameTable,self.funcTable)
         print "Function Table"
         for k in self.funcTable :
             print "  %s" % str(k)

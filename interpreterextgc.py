@@ -132,6 +132,7 @@ import ply.yacc as yacc
 # create a function for each production (note the prefix)
 # The rule is given in the doc string
 
+globalHeap = Heap(10)
 
 def p_program( p ) :
     'program : stmt_list'
@@ -140,7 +141,6 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
-
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list
@@ -272,7 +272,7 @@ def p_list_lbracket_sequence_rbracket(p):
     'list : LBRACKET sequence RBRACKET'
     #    print("p_list_lbracket_sequence_rbracket")
     p[0] = List(p[2])
-
+    #p[0].registerWithHeap(globalHeap)
 
 def p_list_leftparen_rightparen(p):
     'list : LBRACKET RBRACKET'
