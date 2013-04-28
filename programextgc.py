@@ -59,7 +59,7 @@ GLOBAL_FUNCTION_TABLE = dict()
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
-   level = logging.DEBUG
+   level = logging.INFO
 )
 
 log = logging.getLogger('programext')
