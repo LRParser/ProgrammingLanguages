@@ -22,7 +22,7 @@ LINT_FILE=pylint.rc
 FUNC1=$(TEST_INPUT_DIR1)/recLen.p
 FUNC2=$(TEST_INPUT_DIR1)/iterList.p
 
-.PHONY : clean test lint build view-part1 view-part2
+.PHONY : clean test lint build view-part1 view-part2 view-func1 view-func2
 
 
 lint: clean
