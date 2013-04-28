@@ -7,23 +7,28 @@ ________________
 
 This package contains all of the files for Assignment #2.
 
-interpreterext.py		** Contains the grammar for the original mini language along with
-						** support for the following functions: cons, car, cdr, nullp, inpt
-						** and listp.  These are described in detail below.  Support for
-						** list concatination using '||' is also included.
-
-interpreterext.py		** Contains the grammar for the original mini language along with
-						** support for the following functions: cons, car, cdr, nullp, inpt
-						** and listp.  These are described in detail below.  Support for
-						** list concatination using '||' is also included. This version supports
-						** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
-
+=======
+interpreterext.py		** Contains the grammar for the original mini language along with 
+				** support for the following functions: cons, car, cdr, nullp, intp
+				** and listp.  These are described in detail below.  Support for 
+				** list concatination using '||' is also included.
+						
+interpreterext.py		** Contains the grammar for the original mini language along with 
+				** support for the following functions: cons, car, cdr, nullp, intp
+				** and listp.  These are described in detail below.  Support for 
+				** list concatination using '||' is also included. This version supports
+				** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
+						
 programext.py			** Contains the implementation for the grammar.
 
 programextgc.py			** Contains the implementation for the grammar.  This version supports
-						** Dynamic memory managment
-						(Garbage Collection, Mark/Sweep
-						Algorithm).
+				** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
+
+
+makefile			** Contains targets to run (run-part1 and run-part2) and test (test-part1 
+                                ** and test-part2) the interpreter (both parts), as well as targets for
+                                ** viewing (view-part1 and view-part2) and the mini-language length 
+                                ** functions (view-func1 / view-func2).   
 
     *** GC Notes ***
 
@@ -49,21 +54,20 @@ programextgc.py			** Contains the implementation for the grammar.  This version 
     defaulted to 20, which seems reasonable to actually test most things
     without getting in the way.
 
-
-makefile				** Contains targets to run (run-part1 and run-part2) and test (test-part1 and test-part2) the interpreter (both parts)
+                                
 
 TEST FILES - Will be explained in detail below:
 ________________
-add1.p					** Used to test user defined function using while statement.
+add1.p				** Used to test user defined function using while statement.
 
-assignlist1.p			** Used to test assignment
-assignlist2.p
-assignlist3.p
+assignlist1.p			** Used to test assignment of result of plus operator
+assignlist2.p                   ** Used to test various assignments, including lists and car
+assignlist3.p                   ** Used to test assignment of nested lists
 
-carTest1.p				** Used to test car function.
-carTest2.p				** Used to test car function with nested list.
-cdrTest1.p				** Used to test cdr function.
-cdrTest2.p				** Used to test cdr function with nested list.
+carTest1.p			** Used to test car function.
+carTest2.p			** Used to test car function with nested list.
+cdrTest1.p			** Used to test cdr function.
+cdrTest2.p			** Used to test cdr function with nested list.
 
 concatTest0.p			** Used to test concat function with list constants.
 concatTest1.p			** Used to test concat function using Idents.
@@ -73,11 +77,13 @@ concatTest4.p			** Used to test concat function with function calls on both rhs 
 concatTest5.p			** Used to test concat function using Idents and function call on lhs.
 concatTest6.p			** Used to test concat function using Idents and function call (cdr) on rhs.
 
-consTest0.p				** Used to test cons function used in user defined function.
-consTest1.p				** Used to test cons function with a null list.
-consTest2.p				** Used to test cons function used in a nested call.
-consTest3.p				** Used to test cons function used in a nested call.
-consTest4.p				** Used to test cons function used in a nested call with Idents.
+consTest0.p			** Used to test cons function used in user defined function.
+consTest1.p			** Used to test cons function with a null list.
+consTest2.p			** Used to test cons function used in a nested call.
+consTest3.p			** Used to test cons function used in a nested call.
+consTest4.p			** Used to test cons function used in a nested call with Idents.
+consTest5.p                     ** Used to test cons function the result of which is used in a concat (||) operatation.
+
 
 embeddedFunCall0.p		** Used to test embedded function calls.
 embeddedFunCall1.p		** Used to test embedded function calls.
@@ -92,17 +98,24 @@ memoryAlloc1.p			** Used to test memory allocation using cons.
 memoryAlloc2.p			** Used to test memory allocation using cons, car and cdr.
 memoryAlloc3.p			** Used to test memory allocation using cons and ints.
 memoryAlloc4.p			** Used to test memory allocation using cons and ints.
+memoryAlloc5.p                  ** Used to test memory allocation using cons on the result of prior invocations of cons.
+memoryAlloc6.p                  ** Used to test memory allocation using literals.
 
 predicateTest1.p		** Used to test nullp, listp, and intp.
 
 recListFromProf.p		** Used to test the recurive length function from the Professor.
 
+<<<<<<< HEAD
 simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure
 						** Garbage collection runs properly.
+=======
+simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure 
+				** Garbage collection runs properly.
+>>>>>>> updated README
 
 whileTest1.p			** Used to test the while statement.
 
-README					** This file. Contains details out how to run files, build, test, etc.
+README				** This file. Contains details out how to run files, build, test, etc.
 
 DESCRIPTION: Assignment #2, Part #1
 ___________
