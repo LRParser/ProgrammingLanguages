@@ -53,7 +53,8 @@ import logging
 import collections
 from cellCount import *
 
-
+GLOBAL_NAME_TABLE = dict()
+GLOBAL_FUNCTION_TABLE = dict()
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
@@ -172,6 +173,7 @@ class ConsCell:
 
 
 class HeapCell:
+    "The atomic item in the heap with some useful attributes for gc"
     def __init__(self, cell, mark):
         self.cell = cell
         self.mark = mark
@@ -191,32 +193,29 @@ class Heap :
         return ( num_allocated < self.maxSize)
 
 
+    def __find_available(self):
+        for cell in self.cellHeap:
+            if not cell.allocated:
+                cell.cell.car = None
+                cell.cell.cdr = None
+                cell.allocated = True
+                log.debug(hex(id(cell)))
+                return cell.cell
+
     def alloc(self):
         "retuns a ConsCell.  It may invoke GC"
 
         if self.hasSpace():
             log.debug("Num cells in use: %s" % self.get_count_allocated())
-            for cell in self.cellHeap:
-                if not cell.allocated:
-                    cell.cell.car = None
-                    cell.cell.cdr = None
-                    cell.allocated = True
-                    print hex(id(cell))
-                    return cell.cell
+            return self.__find_available()
         else:
             log.debug("out of memory, collecting...")
-            raise MemoryError
-
-    def add ( self, val ) :
-        if(self.hasSpace() and not val in self.cellHeap):
-            if(not isinstance(val,Number)) :
-                raise Exception("Can only add Numbers to heap")
-            print("Adding to heap: "+str(val))
-            self.cellHeap.append(val)
-            print("Cell in use count is: "+str(len(self.cellHeap)))
-        if not(self.hasSpace()) :
-            # We failed to reclaim enough space; raise Exception
-            raise Exception('Heap is full and garbage collection failed to reclaim space')
+            self.collect(GLOBAL_NAME_TABLE, GLOBAL_FUNCTION_TABLE)
+            if not self.hasSpace():
+                #still don't have enough memory...
+                raise MemoryError
+            else:
+                return self.__find_available()
 
     def get_count_allocated(self):
         return len(filter(lambda x: x.allocated == True, self.cellHeap))
@@ -245,33 +244,6 @@ class Heap :
         num_allocated_end = self.get_count_allocated()
         log.debug("Number of cells now allocated: %s" % num_allocated_end)
         log.debug("Freed %s cells" % (num_allocated_start -num_allocated_end) )
-
-
-
-    def collectGarbage(self, nt, ft) :
-        print("Cells in use at start of GC: "+str(len(self.cellHeap)))
-        return
-        for name in nt :
-            val = nt[name]
-            if(isinstance(val,List) or isinstance(val,Number)) :
-                print("Marking: " + str(val) + "identified by: "+name + " so as to not be collected")
-                val.mark()
-
-        itemsToRemove = set()
-        for val in self.cellHeap :
-            print("Found in heap: "+str(val))
-            if(isinstance(val,List) and (not val.marked)) :
-                print("Freeing unreferenced List: "+str(val))
-                itemsToRemove.add(val)
-            elif(isinstance(val,Number) and (not val.marked)) :
-                print("Freeing unreferenced Number: "+str(val))
-                itemsToRemove.add(val)
-
-        # Sweep
-        for val in itemsToRemove :
-            self.cellHeap.remove(val)
-
-        print("Cells in use at end of GC: "+str(len(self.cellHeap)))
 
 
 GLOBAL_HEAP = Heap(10)
@@ -395,8 +367,6 @@ class Sequence( Expr ) :
 
     def __init__( self, e=None, s=None, cons_cell=None ) :
 
-        log.debug("e: %s" %e)
-        log.debug("s: %s" %s)
         if cons_cell is not None:
             self.cons_cell = cons_cell
         elif s is None:
@@ -714,8 +684,6 @@ class FunCall( Expr ):
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
 
-        log.debug("Arg1 %s" % arg1)
-        log.debug("Arg2 %s" % destList)
         return List(cons_cell=BuiltIns.cons(arg1, destList))
 
 
@@ -904,12 +872,13 @@ class Proc :
         self.body.display( nt, ft, depth+1 )
 
 
+
 class Program :
 
     def __init__( self, stmtList) :
         self.stmtList = stmtList
-        self.nameTable = dict()
-        self.funcTable = dict()
+        self.nameTable = GLOBAL_NAME_TABLE
+        self.funcTable = GLOBAL_FUNCTION_TABLE
 
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable )
