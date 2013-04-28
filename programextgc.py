@@ -412,45 +412,13 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh) :
-        if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List) or isinstance(self.lhs, FunCall)) :
-            raise Exception("List concatenation requires two Lists")
-        if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List) or isinstance(self.rhs, FunCall)) :
-            raise Exception("List concatenation requires two Lists")
-
-        if isinstance(self.lhs, Ident) :
-            # since it's an Ident, it needs two-level evaluation to get to the native python list
-            lhsIdent = self.lhs.eval(nt, ft, gh)
-            lhsListEval = lhsIdent.eval(nt, ft, gh)
-            if not isinstance(lhsListEval, list) :
-                raise Exception("Identity must be a list for || operator")
-        elif isinstance(self.lhs, FunCall) :
-            # since it's a FunCall, it needs two-level evaluation to get to the native python list
-            lhsFunc = self.lhs.eval(nt, ft, gh)
-            lhsListEval = lhsFunc.eval(nt, ft, gh)
-            if not isinstance(lhsListEval, list) :
-                raise Exception("Function must return a List for || operator")
-        else :
-            # only requires one-level of evaluation to get to the native python list
-            lhsListEval = self.lhs.eval(nt, ft, gh)
-
-        if isinstance(self.rhs, Ident) :
-            # since it's an Ident, it needs two-level evaluation to get to the native python list
-            rhsIdent = self.rhs.eval(nt, ft, gh)
-            rhsListEval = rhsIdent.eval(nt, ft, gh)
-            if not isinstance(rhsListEval, list) :
-                raise Exception("Identity must be a list for || operator")
-        elif isinstance(self.rhs, FunCall) :
-            # since it's a FunCall, it needs two-level evaluation to get to the native python list
-            rhsFunc = self.rhs.eval(nt, ft, gh)
-            rhsListEval = rhsFunc.eval(nt, ft, gh)
-            if not isinstance(rhsListEval, list) :
-                raise Exception("Function must return a List for || operator")
-        else :
-            # only requires one-level of evaluation to get to the native python list
-            rhsListEval = self.rhs.eval(nt, ft, gh)
-
-        extendedList = lhsListEval + rhsListEval
-        return MiniLangUtils.pythonListToList(extendedList)
+        lhsList = None
+        rhsList = None
+        if(isinstance(self.lhs,Ident)) :
+            lhsList = self.lhs.eval(nt,ft,gh)
+        if(isinstance(self.rhs,Ident)) :
+            rhsList = self.rhs.eval(nt,ft,gh)
+        return BuiltIns.cons(lhsList, rhsList, gh)
 
 
 
@@ -522,7 +490,7 @@ class FunCall( Expr ):
         # Validation complete
         return BuiltIns.car(listPassed)
 
-    def cdr( self, nt, ft):
+    def cdr( self, nt, ft, gh):
 
         listArg = self.argList[0]
         listPassed = None
@@ -530,6 +498,8 @@ class FunCall( Expr ):
         if(isinstance(listArg,Ident)) :
             # We were passed an Ident
             listPassed = evalIdent(listArg, nt, ft, gh)
+        elif(isinstance(listArg,FunCall)) :
+            listPassed = listArg.eval(nt,ft,gh)
         elif(isinstance(listArg,List)) :
             # We were passed a List object
             listPassed = listArg
@@ -537,11 +507,10 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call cdr on List")
 
+        newSeq = Sequence(False,gh,listPassed.sequence)
+        newList = List(newSeq)
 
-        if(len(listPassed.values) < 1) :
-            raise Exception("Can't call cdr on empty List")
-
-        return listPassed.values[1:]
+        return newList
 
     def nullp( self, nt, ft, gh ):
         'Returns 1 if the List is Null, otherwise 0'
@@ -830,12 +799,12 @@ class Program :
 
 # FUNCTIONS
 
-def evalIdent(ident, nt, ft):
+def evalIdent(ident, nt, ft, gh):
 
     orig = ident
 
     while (isinstance(ident, Ident) and not isinstance(ident, List)):
-        ident = ident.eval(nt, ft)
+        ident = ident.eval(nt, ft, gh)
 
     if not isinstance(ident,List):
         return MiniLangUtils.pythonListToList(ident)
