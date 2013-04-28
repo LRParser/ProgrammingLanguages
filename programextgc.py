@@ -301,8 +301,9 @@ class List( Element ) :
         return self.sequence.numberIterator()
 
     def mark( self ) :
-        for val in self.numberIterator() :
-            val.marked = True
+        if (self.sequence is not None) :
+            for val in self.numberIterator() :
+                val.marked = True
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
