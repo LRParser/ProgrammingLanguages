@@ -254,7 +254,7 @@ class Heap :
         num_marked = len(filter(lambda x: x.cell.mark == True, self.cellHeap))
         log.info("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
-        for unmarked in filter(lambda x: x.cell.mark == False, self.cellHeap):
+        for unmarked in [filter(lambda x: x.cell.mark == False, self.cellHeap)]:
             log.debug("freeing ConsCell: %s: %s" % (hex(id(cell.cell)), cell.cell))
             unmarked.allocated = False
             unmarked.cell.cell = None
