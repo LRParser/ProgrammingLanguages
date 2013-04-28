@@ -139,7 +139,8 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
-    GLOBAL_HEAP.collect(P.nameTable,P.funcTable)
+    # Note: Uncomment this line if you wish to see what garbage can be collected after execution
+    # GLOBAL_HEAP.collect(P.nameTable,P.funcTable)
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list

@@ -59,7 +59,7 @@ GLOBAL_FUNCTION_TABLE = dict()
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
-   level = logging.DEBUG
+   level = logging.INFO
 )
 
 log = logging.getLogger('programext')
@@ -468,8 +468,8 @@ class Plus( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh ) :
-        print("lhs is: "+str(self.lhs))
-        print("rhs is: "+str(self.rhs))
+        log.debug("lhs is: "+str(self.lhs))
+        log.debug("rhs is: "+str(self.rhs))
         rhsEval = self.rhs.eval(nt,ft,gh)
         while(type(rhsEval) is not int) :
             rhsEval = rhsEval.eval(nt,ft,gh)
@@ -477,8 +477,8 @@ class Plus( Expr ) :
         while(type(lhsEval) is not int) :
             lhsEval = lhsEval.eval(nt,ft,gh)
 
-        print("lhsEval is: "+str(lhsEval))
-        print("rhsEval is: "+str(rhsEval))
+        log.debug("lhsEval is: "+str(lhsEval))
+        log.debug("rhsEval is: "+str(rhsEval))
         return lhsEval + rhsEval
 
     def display( self, nt, ft, depth=0 ) :
@@ -782,7 +782,7 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh ) :
-        print("assign: "+str(self.name)+" to: "+str(self.rhs))
+        log.debug("assign: "+str(self.name)+" to: "+str(self.rhs))
         if(isinstance(self.rhs,List)) :
             nt[ self.name ] = self.rhs
         else :
