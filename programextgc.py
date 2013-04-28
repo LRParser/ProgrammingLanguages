@@ -50,7 +50,6 @@ import sys
 import copy
 import itertools
 import logging
-from cellCount import *
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
@@ -226,7 +225,7 @@ class Element( Expr ) :
         self.value = v
 
     def eval( self, nt, ft, gh ) :
-        return self.value.eval(nt,ft)
+        return self.value.eval(nt,ft, gh)
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
@@ -380,7 +379,7 @@ class Plus( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt, ft, gh ) :
         return self.lhs.eval( nt, ft, gh ) + self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
@@ -442,13 +441,13 @@ class Concat( Expr ) :
                 raise Exception("Identity must be a list for || operator")
         elif isinstance(self.rhs, FunCall) :
             # since it's a FunCall, it needs two-level evaluation to get to the native python list
-            rhsFunc = self.rhs.eval(nt, ft)
-            rhsListEval = rhsFunc.eval(nt, ft)
+            rhsFunc = self.rhs.eval(nt, ft, gh)
+            rhsListEval = rhsFunc.eval(nt, ft, gh)
             if not isinstance(rhsListEval, list) :
                 raise Exception("Function must return a List for || operator")
         else :
             # only requires one-level of evaluation to get to the native python list
-            rhsListEval = self.rhs.eval(nt, ft)
+            rhsListEval = self.rhs.eval(nt, ft, gh)
 
         extendedList = lhsListEval + rhsListEval
         return MiniLangUtils.pythonListToList(extendedList)
