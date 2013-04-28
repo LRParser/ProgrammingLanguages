@@ -494,7 +494,17 @@ class BuiltIns :
 
     @staticmethod
     def car(listPassed) :
-        return listPassed.sequence.cons_cell.car
+        try:
+            return listPassed.sequence.cons_cell.car
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def cdr(listPassed) :
+        try:
+            return listPassed.sequence.cons_cell.cdr
+        except AttributeError:
+            return None
 
     @staticmethod
     def get_cell(val):
@@ -531,18 +541,6 @@ class BuiltIns :
 
         return c
 
-    def cons_joe(atom, listPassed, gh) :
-
-        if(isinstance(atom,Number)) :
-            gh.add(atom)
-
-        newSeq = None
-        if(listPassed is not None and listPassed.sequence is not None) :
-            newSeq = Sequence(False,gh,atom,wrapSeq)
-        else :
-            newSeq = Sequence(False,gh,atom)
-        newList = List(newSeq)
-        return newList
 
 class FunCall( Expr ):
     '''stores a function call:
@@ -571,7 +569,11 @@ class FunCall( Expr ):
             raise Exception("Can only call car on List")
 
         # Validation complete
-        return BuiltIns.car(listPassed)
+        val = BuiltIns.car(listPassed)
+        if isinstance(val, ConsCell):
+            return List(cons_cell=val)
+        else:
+            return val
 
     def cdr( self, nt, ft):
 
@@ -589,15 +591,20 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call cdr on List")
 
-
-        if(len(listPassed.values) < 1) :
-            raise Exception("Can't call cdr on empty List")
-
-        return listPassed.values[1:]
+        return List(cons_cell=BuiltIns.cdr(listPassed))
 
     def nullp( self, nt, ft ):
         'Returns 1 if the List is Null, otherwise 0'
 
+        the_list = self.argList[0].eval(nt,ft)
+        if isinstance(the_list, List):
+            x = self.car(nt, ft)
+            if x is None:
+                return 1
+            else:
+                return 0
+        else:
+            return 0
         try:
             the_list = self.argList[0].eval(nt,ft).eval(nt,ft);
         except:
