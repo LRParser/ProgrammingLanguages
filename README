@@ -11,7 +11,7 @@ This package contains all of the files for Assignment #2.
 interpreterext.py		** Contains the grammar for the original mini language along with 
 				** support for the following functions: cons, car, cdr, nullp, intp
 				** and listp.  These are described in detail below.  Support for 
-				** list concatenation using '||' is also included.
+				** list concatination using '||' is also included.
 						
 interpreterext.py		** Contains the grammar for the original mini language along with 
 				** support for the following functions: cons, car, cdr, nullp, intp
@@ -54,7 +54,16 @@ makefile			** Contains targets to run (run-part1 and run-part2) and test (test-p
     defaulted to 20, which seems reasonable to actually test most things
     without getting in the way.
 
-                                
+    *** BROKEN CODE ***
+
+    The following is the broken code that we know about:
+
+    In the GC version (programextgc.py) there seems to be an issue with nullp.
+    It appears to work in most cases, but fails if a list is passed in directly
+    to a function without being called, as in recLen.p.  We think it has
+    something to do with over evaluating an Ident, but we couldn't quite fix it
+    in time.
+
 
 TEST FILES - Will be explained in detail below:
 ________________
@@ -105,13 +114,13 @@ predicateTest1.p		** Used to test nullp, listp, and intp.
 
 recListFromProf.p		** Used to test the recurive length function from the Professor.
 
-<<<<<<< HEAD
+
 simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure
-						** Garbage collection runs properly.
-=======
-simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure 
 				** Garbage collection runs properly.
->>>>>>> updated README
+
+whileTest1.p			** Used to test the while statement.
+
+README				** This file. Contains details out how to run files, build, test, etc.
 
 whileTest1.p			** Used to test the while statement.
 
@@ -149,6 +158,16 @@ ___________
 All test case files (*.p) have been run through the interpreters to ensure proper operation.
 
 
+VIEWING FUNCTIONS: Assignment #2, Part #3, Length Functions
+__________
+
+The following makefile targets are supported:
+
+view-func1: This will show the iterative length function in the mini language. This function was built using the sample code posted by instructor on the Discussion board, with modified test data
+
+view-func2: This will show the recursive length function in the mini language. This function was build using the sample code posted by instructor on the Discussion board, with modified test data
+
+
 DESCRIPTION: Assignment #2, Part #2
 ___________
 
@@ -170,11 +189,3 @@ ___________
 All test case files (*.p) have been run through the interpreters to ensure proper operation.
 
 
-VIEWING FUNCTIONS: Assignment #1, Length Functions
-__________
-
-The following makefile targets are supported:
-
-view-func1: This will show the iterative length function in the mini language. This function was built using the sample code posted by instructor on the Discussion board, with modified test data
-
-view-func2: This will show the recursive length function in the mini language. This function was build using the sample code posted by instructor on the Discussion board, with modified test data
