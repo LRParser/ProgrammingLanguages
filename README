@@ -54,16 +54,6 @@ makefile			** Contains targets to run (run-part1 and run-part2) and test (test-p
     defaulted to 20, which seems reasonable to actually test most things
     without getting in the way.
 
-    *** BROKEN CODE ***
-
-    The following is the broken code that we know about:
-
-    In the GC version (programextgc.py) there seems to be an issue with nullp.
-    It appears to work in most cases, but fails if a list is passed in directly
-    to a function without being called, as in recLen.p.  We think it has
-    something to do with over evaluating an Ident, but we couldn't quite fix it
-    in time.
-
 
 TEST FILES - Will be explained in detail below:
 ________________
