@@ -118,6 +118,11 @@ class ConsCell:
     def __init__(self):
         self.__car = None
         self.__cdr = None
+        self.__mark = False
+
+    @property
+    def mark(self):
+        return self.__mark
 
     @property
     def car(self):
@@ -161,10 +166,19 @@ class ConsCell:
         ConsCell.eval(cell.car)
         ConsCell.eval(cell.cdr)
 
+    @staticmethod
+    def mark_cell(cell):
+        if not isinstance(cell, ConsCell):
+            return
+        cell.mark = True
+        ConsCell.mark_cell(cell.car)
+        ConsCell.mark_cell(cell.cdr)
 
     def __to_string(self, val):
         if val is None:
             return "nil"
+        elif isinstance(val, ConsCell):
+            return str(val)
         else:
             return str(val)
 
@@ -176,10 +190,10 @@ class ConsCell:
 
 class HeapCell:
     "The atomic item in the heap with some useful attributes for gc"
-    def __init__(self, cell, mark):
+    def __init__(self, cell):
         self.cell = cell
-        self.mark = mark
         self.allocated = False
+
 
 class Heap :
 
@@ -188,7 +202,7 @@ class Heap :
         self.maxSize = maxSize
         self.allocated = 0
         for i in range(maxSize):
-            self.cellHeap.append(HeapCell(ConsCell(), False))
+            self.cellHeap.append(HeapCell(ConsCell()))
 
     def hasSpace( self ) :
         num_allocated = self.get_count_allocated()
@@ -197,7 +211,7 @@ class Heap :
 
     def __find_available(self):
         for cell in self.cellHeap:
-            if not cell.allocated:
+            if cell.allocated == False:
                 cell.cell.car = None
                 cell.cell.cdr = None
                 cell.allocated = True
@@ -214,19 +228,20 @@ class Heap :
             self.collect(GLOBAL_NAME_TABLE, GLOBAL_FUNCTION_TABLE)
             if not self.hasSpace():
                 #still don't have enough memory...
-                raise MemoryError
+                raise MemoryError("Out of memory in the heap")
             else:
                 return self.__find_available()
 
     def get_count_allocated(self):
         return len(filter(lambda x: x.allocated == True, self.cellHeap))
 
+
     def collect(self, nt, ft):
         num_allocated_start = self.get_count_allocated()
         log.debug("Starting GC with %s used cells" % num_allocated_start)
 
         for cell in self.cellHeap:
-            cell.mark = False
+            cell.cell.mark = False
 
         for name in nt:
             val = BuiltIns.get_cell(nt[name])
@@ -234,13 +249,15 @@ class Heap :
                 log.debug("Found val %s" % val)
                 for cell in self.cellHeap:
                     if hex(id(cell.cell)) == hex(id(val)):
-                        cell.mark = True
+                        ConsCell.mark_cell(cell.cell)
 
-        num_marked = len(filter(lambda x: x.mark == True, self.cellHeap))
+        num_marked = len(filter(lambda x: x.cell.mark == True, self.cellHeap))
         log.debug("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
-        for unmarked in filter(lambda x: x.mark == False, self.cellHeap):
+        for unmarked in filter(lambda x: x.cell.mark == False, self.cellHeap):
             unmarked.allocated = False
+            unmarked.cell.cell = None
+            unmarked.cell.cell = None
 
         num_allocated_end = self.get_count_allocated()
         log.debug("Number of cells now allocated: %s" % num_allocated_end)
@@ -542,8 +559,13 @@ class BuiltIns :
         ConsCell.check_cdr(y)
 
         #Get new cons cell
-        # This should come from heap.alloc() or something
         c = GLOBAL_HEAP.alloc()
+
+        log.debug(hex(id(c)))
+        log.debug(hex(id(x)))
+
+        if hex(id(c)) == hex(id(x)):
+            raise MemoryError("Out of Memory")
 
         c.car = x
         c.cdr = y
