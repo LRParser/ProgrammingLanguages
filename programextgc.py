@@ -315,6 +315,8 @@ class Sequence( Expr ) :
 
     def __init__( self, allocMemory, gh, e, s=None ) :
         self.gh = gh
+        if(e is None) :
+            raise Exception("Can't create sequence with null elemenet")
         self.element = e
         self.sequence = s
         if(allocMemory) :
@@ -414,10 +416,12 @@ class Concat( Expr ) :
     def eval( self, nt, ft, gh) :
         lhsList = None
         rhsList = None
-        if(isinstance(self.lhs,Ident)) :
+        if(isinstance(self.lhs,Ident) or isinstance(self.lhs,FunCall)) :
             lhsList = self.lhs.eval(nt,ft,gh)
-        if(isinstance(self.rhs,Ident)) :
+
+        if(isinstance(self.rhs,Ident) or isinstance(self.rhs,FunCall)) :
             rhsList = self.rhs.eval(nt,ft,gh)
+
         return BuiltIns.cons(lhsList, rhsList, gh)
 
 
