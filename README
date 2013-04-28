@@ -1,0 +1,129 @@
+Group #9 Assignment #2
+	Jon Boone
+	Joshua Datko
+	Paul DeMicco
+	Joseph Heenan
+________________
+
+This package contains all of the files for Assignment #2.
+
+interpreterext.py		** Contains the grammar for the original mini language along with 
+						** support for the following functions: cons, car, cdr, nullp, inpt
+						** and listp.  These are described in detail below.  Support for 
+						** list concatination using '||' is also included.
+						
+interpreterext.py		** Contains the grammar for the original mini language along with 
+						** support for the following functions: cons, car, cdr, nullp, inpt
+						** and listp.  These are described in detail below.  Support for 
+						** list concatination using '||' is also included. This version supports
+						** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
+						
+programext.py			** Contains the implementation for the grammar.
+
+programextgc.py			** Contains the implementation for the grammar.  This version supports
+						** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
+
+makefile				** Contains the grammar for the mini language.
+
+TEST FILES - Will be explained in detail below:
+________________
+add1.p					** Used to test user defined function using while statement.
+
+assignlist1.p			** Used to test assignment
+assignlist2.p
+assignlist3.p
+
+carTest1.p				** Used to test car function.
+carTest2.p				** Used to test car function with nested list.
+cdrTest1.p				** Used to test cdr function.
+cdrTest2.p				** Used to test cdr function with nested list.
+
+concatTest0.p			** Used to test concat function with list constants.
+concatTest1.p			** Used to test concat function using Idents.
+concatTest2.p			** Used to test concat function using Idents and nested lists.
+concatTest3.p			** Used to test concat function using Idents and function call (cons) on rhs.
+concatTest4.p			** Used to test concat function with function calls on both rhs and lhs.
+concatTest5.p			** Used to test concat function using Idents and function call on lhs.
+concatTest6.p			** Used to test concat function using Idents and function call (cdr) on rhs.
+
+consTest0.p				** Used to test cons function used in user defined function.
+consTest1.p				** Used to test cons function with a null list.
+consTest2.p				** Used to test cons function used in a nested call.
+consTest3.p				** Used to test cons function used in a nested call.
+consTest4.p				** Used to test cons function used in a nested call with Idents.
+
+embeddedFunCall0.p		** Used to test embedded function calls.
+embeddedFunCall1.p		** Used to test embedded function calls.
+
+identTest1.p			** TODO.
+
+iterListFromProf.p		** Used to test the iterative length function from the Professor.
+
+listLenRec.p			** Used to test the recurive length function from the Professor.
+
+memoryAlloc1.p			** Used to test memory allocation using cons.
+memoryAlloc2.p			** Used to test memory allocation using cons, car and cdr.
+memoryAlloc3.p			** Used to test memory allocation using cons and ints.
+memoryAlloc4.p			** Used to test memory allocation using cons and ints.
+
+predicateTest1.p		** Used to test nullp, listp, and intp.
+
+recListFromProf.p		** Used to test the recurive length function from the Professor.
+
+simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure 
+						** Garbage collection runs properly.
+
+whileTest1.p			** Used to test the while statement.
+
+README					** Details out how to run files, build, test, etc.
+
+DESCRIPTION: Assignment #2, Part #1
+___________
+
+This project extends the mini language and the interpreter by adding support for Lists.
+
+List Grammar:
+   <list> -> [<sequence>]|[]
+   <sequence> -> <listelement>,<sequence>|<listelement>
+   <listelement> -> <list>|NUMBER
+
+Take note that lists are enclosed in '[' and ']' instead of '(' and ')'.
+
+The following functions have been added:   
+	cons( e, L ) - 	returns a new list, with element e prepended to the front of list L
+    car( L ) - 		returns the first element in the list
+    cdr( L ) - 		returns the rest of the list (minus the first element)
+    nullp( L ) - 	returns 1 if L is null, 0 otherwise
+    intp( e ) - 	returns 1 if e is an integer, 0 otherwise
+    listp( e ) - 	returns 1 if e is a list, 0 otherwise   
+
+List concatenation is also supported by using the following operator '||'
+
+RUNNING: Assignment #2, Part #1
+___________
+TODO -- DESCRIBE HOW TO RUN..
+
+TESTING: Assignment #2, Part #1
+___________
+All test case files (*.p) have been run through the interpreters to ensure proper operation.
+
+
+DESCRIPTION: Assignment #2, Part #2
+___________
+
+Part 2 of the project implements the same extensions to the mini languange however it implements dynamic memory allocation and
+garbage collection using the following:
+	
+	All memory allocation is done using the cons function call.  This provides a heap of cons cells and organizes them in a list. Cons, car, cdr and nullp 
+	have been reimplemented to access cells located in the heap.
+	
+	Gabage collection is implemented using a mark and sweep algorithm.
+	
+RUNNING: Assignment #2, Part #2
+___________
+TODO -- DESCRIBE HOW TO RUN..
+
+TESTING: Assignment #2, Part #2
+___________
+All test case files (*.p) have been run through the interpreters to ensure proper operation.
+
