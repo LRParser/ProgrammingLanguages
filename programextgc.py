@@ -896,7 +896,10 @@ class Proc :
             # bind parameters in new name table (the only things there right now)
             # use zip, bastard
         for i in range( len( args )) :
-            newContext[ self.parList[i] ] = args[i].eval( nt, ft, gh )
+           if isinstance(args[i], List):
+               newContext[ self.parList[i] ] = args[i]
+           else:
+               newContext[ self.parList[i] ] = args[i].eval( nt, ft, gh )
 
         # evaluate the function body using the new name table and the old (only)
         # function table.  Note that the proc's return value is stored as

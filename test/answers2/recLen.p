@@ -41,11 +41,11 @@ STMT LIST
 Running Program
 Dump of Symbol Table
   sizetwo -> 
-1
+2
   a -> 
 ( 1 ( ( ( 23 nil ) nil ) ( ( 4 ( 6 nil ) ) ( 6 ( 7 ( 8 ( 9 ( 0 ( 2 ( 2 nil ) ) ) ) ) ) ) ) ) )
   sizezero -> 
-1
+0
   sizeten -> 
 10
 Function Table
