@@ -19,6 +19,8 @@ RUN_TEST1=$(PYTHON) $(TEST_DIR)/$(TESTER1)
 RUN_TEST2=$(PYTHON) $(TEST_DIR)/$(TESTER2)
 LINT_FILE=pylint.rc
 
+FUNC1=$(TEST_INPUT_DIR1)/recLen.p
+FUNC2=$(TEST_INPUT_DIR1)/iterList.p
 
 .PHONY : clean test lint build view-part1 view-part2
 
@@ -53,6 +55,11 @@ view-part1 : clean
 view-part2 : clean
 	@more $(INTERPRETGC) $(PROGRAMEXTGC)
 
+view-func1: clean
+	@more $(FUNC1)
+
+view-func2: clean
+	@more $(FUNC2)
 
 build : clean
 
