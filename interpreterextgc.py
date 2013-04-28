@@ -139,7 +139,7 @@ def p_program( p ) :
     print 'Running Program'
     P.eval()
     P.dump()
-    GLOBAL_HEAP.collectGarbage(P.nameTable,P.funcTable)
+    GLOBAL_HEAP.collect(P.nameTable,P.funcTable)
 
 def p_stmt_list( p ) :
     '''stmt_list : stmt SEMICOLON stmt_list
@@ -269,43 +269,43 @@ def p_func_call( p ) :
 # List parsing rules #
 def p_list_lbracket_sequence_rbracket(p):
     'list : LBRACKET sequence RBRACKET'
-    print("p_list_lbracket_sequence_rbracket")
+#    print("p_list_lbracket_sequence_rbracket")
     p[0] = List(p[2])
     #p[0].registerWithHeap(globalHeap)
 
 def p_list_leftparen_rightparen(p):
     'list : LBRACKET RBRACKET'
-    print("p_list_leftparen_rightparen")
+#    print("p_list_leftparen_rightparen")
     p[0] = List()
 
 
 def p_sequence_element_comma_sequence(p):
     'sequence : element COMMA sequence'
-    print("p_sequence_element_comma_sequence")
+#    print("p_sequence_element_comma_sequence")
     p[0] = Sequence(p[1],p[3])
 
 
 def p_sequence_element(p):
     'sequence : element'
-    print("p_sequence_element")
+#    print("p_sequence_element")
     p[0] = Sequence(p[1])
 
 
 def p_element_list(p):
     'element : list'
-    print("p_element_list")
+#    print("p_element_list")
     p[0] = p[1]
 
 
 def p_element_expr(p):
     'element : expr'
-    print("p_element_expr")
+#    print("p_element_expr")
     p[0] = p[1]
 
 
 def p_element_element_LISTCONCATENATOR_list(p):
     'element : element LISTCONCATENATOR list'
-    print("p_list_element_LISTCONCATENATOR element")
+#    print("p_list_element_LISTCONCATENATOR element")
     p[0] = Concat(p[1],p[3])
 
 def p_element_element_LISTCONCATENATOR_fact(p):
