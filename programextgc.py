@@ -731,7 +731,7 @@ class AssignStmt( Stmt ) :
 
     def eval( self, nt, ft, gh ) :
         print("assign: "+str(self.name)+" to: "+str(self.rhs))
-        if(isinstance(self.rhs,List) or isinstance(self.rhs,Number)) :
+        if(isinstance(self.rhs,List)) :
             nt[ self.name ] = self.rhs
         else :
             nt[ self.name ] = self.rhs.eval( nt, ft, gh )
