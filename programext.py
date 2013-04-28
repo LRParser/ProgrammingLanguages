@@ -473,7 +473,7 @@ class FunCall( Expr ):
         arg1 = self.argList[0]
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)) :
             object = arg1.eval(nt, ft)
-            if not isinstance(object, int) :
+            if not (isinstance(object, int) or isinstance(object, list)) :
                 # needs to be evaluated twice to get to native python type
                 evalObject = object.eval(nt,ft)
             else :
