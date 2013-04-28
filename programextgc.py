@@ -50,6 +50,7 @@ import sys
 import copy
 import itertools
 import logging
+import collections
 from cellCount import *
 
 
@@ -168,14 +169,43 @@ class ConsCell:
     def __str__(self):
         return "( %s %s )" % (self.__to_string(self.car), self.__to_string(self.cdr))
 
+
+
+class HeapCell:
+    def __init__(self, cell, mark):
+        self.cell = cell
+        self.mark = mark
+        self.allocated = False
+
 class Heap :
 
     def __init__( self, maxSize=100 ) :
         self.cellHeap = list()
         self.maxSize = maxSize
+        self.allocated = 0
+        for i in range(maxSize):
+            self.cellHeap.append(HeapCell(ConsCell(), False))
 
     def hasSpace( self ) :
-        return (len(self.cellHeap)<self.maxSize)
+        num_allocated = self.get_count_allocated()
+        return ( num_allocated < self.maxSize)
+
+
+    def alloc(self):
+        "retuns a ConsCell.  It may invoke GC"
+
+        if self.hasSpace():
+            log.debug("Num cells in use: %s" % self.get_count_allocated())
+            for cell in self.cellHeap:
+                if not cell.allocated:
+                    cell.cell.car = None
+                    cell.cell.cdr = None
+                    cell.allocated = True
+                    print hex(id(cell))
+                    return cell.cell
+        else:
+            log.debug("out of memory, collecting...")
+            raise MemoryError
 
     def add ( self, val ) :
         if(self.hasSpace() and not val in self.cellHeap):
@@ -187,6 +217,36 @@ class Heap :
         if not(self.hasSpace()) :
             # We failed to reclaim enough space; raise Exception
             raise Exception('Heap is full and garbage collection failed to reclaim space')
+
+    def get_count_allocated(self):
+        return len(filter(lambda x: x.allocated == True, self.cellHeap))
+
+    def collect(self, nt, ft):
+        num_allocated_start = self.get_count_allocated()
+        log.debug("Starting GC with %s used cells" % num_allocated_start)
+
+        for cell in self.cellHeap:
+            cell.mark = False
+
+        for name in nt:
+            val = BuiltIns.get_cell(nt[name])
+            if isinstance(val, ConsCell):
+                log.debug("Found val %s" % val)
+                for cell in self.cellHeap:
+                    if hex(id(cell.cell)) == hex(id(val)):
+                        cell.mark = True
+
+        num_marked = len(filter(lambda x: x.mark == True, self.cellHeap))
+        log.debug("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
+        #Sweep
+        for unmarked in filter(lambda x: x.mark == False, self.cellHeap):
+            unmarked.allocated = False
+
+        num_allocated_end = self.get_count_allocated()
+        log.debug("Number of cells now allocated: %s" % num_allocated_end)
+        log.debug("Freed %s cells" % (num_allocated_start -num_allocated_end) )
+
+
 
     def collectGarbage(self, nt, ft) :
         print("Cells in use at start of GC: "+str(len(self.cellHeap)))
@@ -280,9 +340,6 @@ class List( Element ) :
         else:
             log.debug("s: %s" % s)
             raise TypeError
-
-    def registerWithHeap(self, gh) :
-        gh.add(self)
 
     def unPackSequence(self,seq):
         """ Loops through the sequence, pulling out
@@ -508,7 +565,6 @@ class BuiltIns :
 
     @staticmethod
     def get_cell(val):
-        log.debug("get call called with %s" % val)
         if isinstance(val, Sequence):
             return val.cons_cell
         elif isinstance(val, List):
@@ -521,8 +577,7 @@ class BuiltIns :
         elif val is None:
             return None
         else:
-            log.debug(val)
-            raise TypeError
+            return None
 
     @staticmethod
     def cons(x, y) :
@@ -534,7 +589,7 @@ class BuiltIns :
 
         #Get new cons cell
         # This should come from heap.alloc() or something
-        c = ConsCell()
+        c = GLOBAL_HEAP.alloc()
 
         c.car = x
         c.cdr = y
