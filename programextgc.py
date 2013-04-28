@@ -132,8 +132,10 @@ class ConsCell:
             pass
         elif isinstance(val, ConsCell):
             pass
+        elif isinstance(val, Sequence):
+            pass
         else:
-            raise Exception("Invalid car")
+            raise Exception("Invalid car %s" % val)
 
     @staticmethod
     def check_cdr(val):
@@ -143,6 +145,8 @@ class ConsCell:
         if val is None:
             pass
         elif isinstance(val, ConsCell):
+            pass
+        elif isinstance(val, Sequence):
             pass
         else:
             raise Exception("Invalid cdr")
@@ -186,6 +190,7 @@ class Heap :
 
     def collectGarbage(self, nt, ft) :
         print("Cells in use at start of GC: "+str(len(self.cellHeap)))
+        return
         for name in nt :
             val = nt[name]
             if(isinstance(val,List) or isinstance(val,Number)) :
@@ -270,8 +275,11 @@ class List( Element ) :
     def __init__( self, s=None, cons_cell=None ) :
         if cons_cell is not None:
             self.sequence = Sequence(cons_cell=cons_cell)
-        else:
+        elif isinstance(s, Sequence) or s is None:
             self.sequence = s
+        else:
+            log.debug("s: %s" % s)
+            raise TypeError
 
     def registerWithHeap(self, gh) :
         gh.add(self)
@@ -318,9 +326,6 @@ class List( Element ) :
     def numberIterator( self ) :
         return self.sequence.numberIterator()
 
-    def mark( self ) :
-        for val in self.numberIterator() :
-            val.marked = True
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
@@ -354,6 +359,9 @@ class Sequence( Expr ) :
 
     def display( self, nt, ft, depth=0 ) :
         print self.cons_cell
+
+    def __str__(self):
+        return str(self.cons_cell)
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -489,8 +497,28 @@ class BuiltIns :
         return listPassed.sequence.cons_cell.car
 
     @staticmethod
+    def get_cell(val):
+        log.debug("get call called with %s" % val)
+        if isinstance(val, Sequence):
+            return val.cons_cell
+        elif isinstance(val, List):
+            return BuiltIns.get_cell(val.sequence)
+        elif isinstance(val, ConsCell):
+            #yeah!
+            return val
+        elif isinstance(val, Number):
+            return val
+        elif val is None:
+            return None
+        else:
+            log.debug(val)
+            raise TypeError
 
+    @staticmethod
     def cons(x, y) :
+        x = BuiltIns.get_cell(x)
+        y = BuiltIns.get_cell(y)
+
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
@@ -611,15 +639,10 @@ class FunCall( Expr ):
 
         # evaluate the first argument
         arg1 = self.argList[0]
+        destList = None
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
             # needs to be evaluated twice to get to native python type
-            object = arg1.eval(nt, ft)
-            evalObject = object.eval(nt,ft)
-        else :
-            # only needs to be evaluated once to get to native python type
-            evalObject = arg1.eval(nt,ft)
-        if not(isinstance(evalObject, list) or isinstance(evalObject, int)) :
-            raise Exception("Can only cons an object onto a List")
+            arg1 = arg1.eval(nt, ft)
 
         # evaluate the second argument
         arg2 = self.argList[1]
@@ -628,18 +651,11 @@ class FunCall( Expr ):
             destList = arg2.eval(nt,ft)
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
-            evalDestList = destList.eval(nt,ft)
-        else :
-            evalDestList = arg2.eval(nt,ft)
-        if not(isinstance(evalDestList, list)) :
-            raise Exception("Can only cons an object onto a List")
 
-        # arguments check out, so create a new list based on evalDestList
-        # then insert evalObject at the head of the list
-        newList = evalDestList
-        newList.insert(0, evalObject)
-        return MiniLangUtils.pythonListToList(newList)
-        #return newList
+        log.debug("Arg1 %s" % arg1)
+        log.debug("Arg2 %s" % destList)
+        return List(cons_cell=BuiltIns.cons(arg1, destList))
+
 
 
     def eval( self, nt, ft ) :
@@ -651,7 +667,7 @@ class FunCall( Expr ):
             return func(nt,ft)
         # Otherwise, call the function from the function table
         else :
-            return ft[ self.name ].apply( nt, ft, self.argList )
+            return ft[ self.name ].apply( nt, ft, self.argList)
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
