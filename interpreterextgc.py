@@ -132,7 +132,7 @@ import ply.yacc as yacc
 # create a function for each production (note the prefix)
 # The rule is given in the doc string
 
-globalHeap = Heap(10)
+globalHeap = Heap(30)
 
 def p_program( p ) :
     'program : stmt_list'
