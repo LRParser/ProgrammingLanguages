@@ -309,14 +309,18 @@ class List( Element ) :
         the memory addr, which doesn't work out so well when trying to compare
         test results.
         '''
-        return "List with %d elements" % len(list(self.numberIterator()))
+        if self.sequence is None :
+            numElements = 0
+        else :
+            numElements = len(list(self.numberIterator()))
+        return "List with %d elements" % numElements
 
 class Sequence( Expr ) :
 
     def __init__( self, allocMemory, gh, e, s=None ) :
         self.gh = gh
-        if(e is None) :
-            raise Exception("Can't create sequence with null elemenet")
+#        if(e is None) :
+#            raise Exception("Can't create sequence with null elemenet")
         self.element = e
         self.sequence = s
         if(allocMemory) :
@@ -556,7 +560,7 @@ class FunCall( Expr ):
         except:
             return 0
 
-    def intp( self, nt, ft ):
+    def intp( self, nt, ft, gh ):
         "Returns 1 if it is Number, otherwise 0"
 
         try:
