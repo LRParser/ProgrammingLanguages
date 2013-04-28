@@ -47,11 +47,7 @@
 #
 
 import sys
-import copy
-import itertools
 import logging
-import collections
-# from cellCount import *
 
 
 GLOBAL_NAME_TABLE = dict()

@@ -50,7 +50,7 @@ programextgc.py			** Contains the implementation for the grammar.  This version 
     without getting in the way.
 
 
-makefile				** Contains the grammar for the mini language.
+makefile				** Contains targets to run (run-part1 and run-part2) and test (test-part1 and test-part2) the interpreter (both parts)
 
 TEST FILES - Will be explained in detail below:
 ________________
@@ -82,7 +82,7 @@ consTest4.p				** Used to test cons function used in a nested call with Idents.
 embeddedFunCall0.p		** Used to test embedded function calls.
 embeddedFunCall1.p		** Used to test embedded function calls.
 
-identTest1.p			** TODO.
+identTest1.p			** Used to ensure the Ident object parses correctly
 
 iterListFromProf.p		** Used to test the iterative length function from the Professor.
 
@@ -102,7 +102,7 @@ simpleGcTest.p			** Used to test a few simple assignments and functions calls to
 
 whileTest1.p			** Used to test the while statement.
 
-README					** Details out how to run files, build, test, etc.
+README					** This file. Contains details out how to run files, build, test, etc.
 
 DESCRIPTION: Assignment #2, Part #1
 ___________
@@ -128,7 +128,8 @@ List concatenation is also supported by using the following operator '||'
 
 RUNNING: Assignment #2, Part #1
 ___________
-TODO -- DESCRIBE HOW TO RUN..
+
+Can be run via make run-part1 < myinputfile (where you substitute myinputfile for an appropriate mini language input file)
 
 TESTING: Assignment #2, Part #1
 ___________
@@ -148,7 +149,8 @@ garbage collection using the following:
 
 RUNNING: Assignment #2, Part #2
 ___________
-TODO -- DESCRIBE HOW TO RUN..
+
+Can be run via make run-part2 < myinputfile (where you substitute myinputfile for an appropriate mini language input file)
 
 TESTING: Assignment #2, Part #2
 ___________
