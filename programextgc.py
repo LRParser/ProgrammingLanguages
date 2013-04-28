@@ -238,7 +238,7 @@ class Heap :
 
     def collect(self, nt, ft):
         num_allocated_start = self.get_count_allocated()
-        log.debug("Starting GC with %s used cells" % num_allocated_start)
+        log.info("Starting GC with %s used cells" % num_allocated_start)
 
         for cell in self.cellHeap:
             cell.cell.mark = False
@@ -252,7 +252,7 @@ class Heap :
                         ConsCell.mark_cell(cell.cell)
 
         num_marked = len(filter(lambda x: x.cell.mark == True, self.cellHeap))
-        log.debug("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
+        log.info("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
         for unmarked in filter(lambda x: x.cell.mark == False, self.cellHeap):
             unmarked.allocated = False
@@ -260,8 +260,8 @@ class Heap :
             unmarked.cell.cell = None
 
         num_allocated_end = self.get_count_allocated()
-        log.debug("Number of cells now allocated: %s" % num_allocated_end)
-        log.debug("Freed %s cells" % (num_allocated_start -num_allocated_end) )
+        log.info("Number of cells now allocated: %s" % num_allocated_end)
+        log.info("Freed %s cells" % (num_allocated_start -num_allocated_end) )
 
 
 GLOBAL_HEAP = Heap(10)
@@ -554,15 +554,14 @@ class BuiltIns :
         x = BuiltIns.get_cell(x)
         y = BuiltIns.get_cell(y)
 
+        log.debug("x: %s" % x)
+        log.debug("y: %s" % y)
 
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
         #Get new cons cell
         c = GLOBAL_HEAP.alloc()
-
-        log.debug(hex(id(c)))
-        log.debug(hex(id(x)))
 
         if hex(id(c)) == hex(id(x)):
             raise MemoryError("Out of Memory")
@@ -674,6 +673,7 @@ class FunCall( Expr ):
 
     def cons( self, nt, ft, gh ) :
         '''Returns a new list, with element prepended to existing list'''
+
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
 
@@ -693,6 +693,8 @@ class FunCall( Expr ):
             destList = arg2.eval(nt,ft,gh)
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
+        elif isinstance(arg2,List):
+            destList = arg2
 
         return List(cons_cell=BuiltIns.cons(arg1, destList))
 
@@ -708,6 +710,7 @@ class FunCall( Expr ):
         # Is this function defined in this class?
         if func:
             # It is, so call it (like car, cdr, etc...)
+            log.debug("Calling builtin")
             return func(nt,ft, gh)
         # Otherwise, call the function from the function table
         else :
