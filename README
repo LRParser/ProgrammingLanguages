@@ -8,27 +8,27 @@ ________________
 This package contains all of the files for Assignment #2.
 
 =======
-interpreterext.py		** Contains the grammar for the original mini language along with 
+interpreterext.py		** Contains the grammar for the original mini language along with
 				** support for the following functions: cons, car, cdr, nullp, intp
-				** and listp.  These are described in detail below.  Support for 
+				** and listp.  These are described in detail below.  Support for
 				** list concatination using '||' is also included.
-						
-interpreterext.py		** Contains the grammar for the original mini language along with 
+
+interpreterext.py		** Contains the grammar for the original mini language along with
 				** support for the following functions: cons, car, cdr, nullp, intp
-				** and listp.  These are described in detail below.  Support for 
+				** and listp.  These are described in detail below.  Support for
 				** list concatination using '||' is also included. This version supports
 				** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
-						
+
 programext.py			** Contains the implementation for the grammar.
 
 programextgc.py			** Contains the implementation for the grammar.  This version supports
 				** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
 
 
-makefile			** Contains targets to run (run-part1 and run-part2) and test (test-part1 
+makefile			** Contains targets to run (run-part1 and run-part2) and test (test-part1
                                 ** and test-part2) the interpreter (both parts), as well as targets for
-                                ** viewing (view-part1 and view-part2) and the mini-language length 
-                                ** functions (view-func1 / view-func2).   
+                                ** viewing (view-part1 and view-part2) and the mini-language length
+                                ** functions (view-func1 / view-func2).
 
     *** GC Notes ***
 
@@ -54,7 +54,14 @@ makefile			** Contains targets to run (run-part1 and run-part2) and test (test-p
     defaulted to 20, which seems reasonable to actually test most things
     without getting in the way.
 
-                                
+    *** BROKEN CODE ***
+
+    In the GC version (programextgc.py) there seems to be an issue with nullp.
+    It appears to work in most cases, but fails if a list is passed in directly
+    to a function without being called, as in recLen.p.  We think it has
+    something to do with over evaluating an Ident, but we couldn't quite fix it
+    in time.
+
 
 TEST FILES - Will be explained in detail below:
 ________________
@@ -105,13 +112,8 @@ predicateTest1.p		** Used to test nullp, listp, and intp.
 
 recListFromProf.p		** Used to test the recurive length function from the Professor.
 
-<<<<<<< HEAD
 simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure
-						** Garbage collection runs properly.
-=======
-simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure 
 				** Garbage collection runs properly.
->>>>>>> updated README
 
 whileTest1.p			** Used to test the while statement.
 
