@@ -255,6 +255,7 @@ class Heap :
         log.info("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
         for unmarked in filter(lambda x: x.cell.mark == False, self.cellHeap):
+            log.debug("freeing ConsCell: %s: %s" % (hex(id(cell.cell)), cell.cell))
             unmarked.allocated = False
             unmarked.cell.cell = None
             unmarked.cell.cell = None
@@ -554,9 +555,6 @@ class BuiltIns :
         x = BuiltIns.get_cell(x)
         y = BuiltIns.get_cell(y)
 
-        log.debug("x: %s" % x)
-        log.debug("y: %s" % y)
-
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
@@ -569,6 +567,7 @@ class BuiltIns :
         c.car = x
         c.cdr = y
 
+        log.debug("New cons: %s at: %s" % (c,hex(id(c))))
         return c
 
 
