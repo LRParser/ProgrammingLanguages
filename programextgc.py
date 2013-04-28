@@ -200,7 +200,7 @@ class Heap :
     def __init__( self, maxSize=100 ) :
         self.cellHeap = list()
         self.maxSize = maxSize
-        self.allocated = 0
+        self.allocated = False
         for i in range(maxSize):
             self.cellHeap.append(HeapCell(ConsCell()))
 
@@ -209,12 +209,20 @@ class Heap :
         return ( num_allocated < self.maxSize)
 
 
+    def is_alloc(self, cons_cell):
+        for heap_cell in self.cellHeap:
+            if hex(id(cons_cell)) == hex(id(heap_cell.cell)):
+                return heap_cell.allocated
+
+        return False
+
     def __find_available(self):
         for cell in self.cellHeap:
             if cell.allocated == False:
                 cell.cell.car = None
                 cell.cell.cdr = None
                 cell.allocated = True
+                log.debug("available cell: %s %s" % (hex(id(cell.cell)), cell.cell))
                 return cell.cell
 
     def alloc(self):
@@ -235,10 +243,14 @@ class Heap :
     def get_count_allocated(self):
         return len(filter(lambda x: x.allocated == True, self.cellHeap))
 
+    def print_cells(self):
+        for cell in self.cellHeap:
+            log.debug("Cell: %s is %s" % (hex(id(cell.cell)), cell.cell))
 
     def collect(self, nt, ft):
         num_allocated_start = self.get_count_allocated()
         log.info("Starting GC with %s used cells" % num_allocated_start)
+        self.print_cells()
 
         for cell in self.cellHeap:
             cell.cell.mark = False
@@ -254,8 +266,9 @@ class Heap :
         num_marked = len(filter(lambda x: x.cell.mark == True, self.cellHeap))
         log.info("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
-        for unmarked in [filter(lambda x: x.cell.mark == False, self.cellHeap)]:
-            log.debug("freeing ConsCell: %s: %s" % (hex(id(cell.cell)), cell.cell))
+        unmarked_list = filter(lambda x: x.cell.mark == False, self.cellHeap)
+        for unmarked in unmarked_list:
+            log.debug("freeing ConsCell: %s: %s" % (hex(id(unmarked.cell)), unmarked.cell))
             unmarked.allocated = False
             unmarked.cell.cell = None
             unmarked.cell.cell = None
@@ -561,7 +574,8 @@ class BuiltIns :
         #Get new cons cell
         c = GLOBAL_HEAP.alloc()
 
-        if hex(id(c)) == hex(id(x)):
+        #check to see if x and y are still good
+        if GLOBAL_HEAP.is_alloc(x) == False or GLOBAL_HEAP.is_alloc(y) == False:
             raise MemoryError("Out of Memory")
 
         c.car = x
