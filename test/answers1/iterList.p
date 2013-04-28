@@ -3,34 +3,34 @@ STMT LIST
   DEFINE listlength :
     PROC ['l'] :
       STMT LIST
-        Assign: i :=
-          0
-        Assign: ll :=
+        Assign: currentList :=
           l
+        Assign: index :=
+          0
         WHILE
           MULT
             SUB
               Function Call: nullp, args:
-                ll
+                currentList
               1
             SUB
               0
               1
         DO
           STMT LIST
-            Assign: i :=
+            Assign: index :=
               ADD
-                i
+                index
                 1
-            Assign: ll :=
+            Assign: currentList :=
               Function Call: cdr, args:
-                ll
+                currentList
         Assign: return :=
-          i
+          index
   Assign: sizetwo :=
     Function Call: listlength, args:
-        1
-        2
+        3
+        4
   Assign: a :=
       1
           23

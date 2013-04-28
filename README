@@ -11,7 +11,7 @@ This package contains all of the files for Assignment #2.
 interpreterext.py		** Contains the grammar for the original mini language along with 
 				** support for the following functions: cons, car, cdr, nullp, intp
 				** and listp.  These are described in detail below.  Support for 
-				** list concatination using '||' is also included.
+				** list concatenation using '||' is also included.
 						
 interpreterext.py		** Contains the grammar for the original mini language along with 
 				** support for the following functions: cons, car, cdr, nullp, intp
@@ -168,3 +168,13 @@ Can be run via make run-part2 < myinputfile (where you substitute myinputfile fo
 TESTING: Assignment #2, Part #2
 ___________
 All test case files (*.p) have been run through the interpreters to ensure proper operation.
+
+
+VIEWING FUNCTIONS: Assignment #1, Length Functions
+__________
+
+The following makefile targets are supported:
+
+view-func1: This will show the iterative length function in the mini language. This function was built using the sample code posted by instructor on the Discussion board, with modified test data
+
+view-func2: This will show the recursive length function in the mini language. This function was build using the sample code posted by instructor on the Discussion board, with modified test data

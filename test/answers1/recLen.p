@@ -3,15 +3,13 @@ STMT LIST
   DEFINE listlengthr :
     PROC ['l'] :
       STMT LIST
-        Assign: i :=
-          0
-        Assign: ll :=
+        Assign: currentList :=
           l
         IF
           MULT
             SUB
               Function Call: nullp, args:
-                ll
+                currentList
               1
             SUB
               0
@@ -23,15 +21,15 @@ STMT LIST
                 1
                 Function Call: listlengthr, args:
                   Function Call: cdr, args:
-                    ll
+                    currentList
         ELSE
           STMT LIST
             Assign: return :=
               0
   Assign: sizetwo :=
     Function Call: listlengthr, args:
-        1
-        2
+        3
+        4
   Assign: a :=
       1
           23

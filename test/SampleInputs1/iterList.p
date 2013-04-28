@@ -1,14 +1,14 @@
 define listlength
 proc(l)
-i := 0;
-ll := l;
-while (nullp(ll)-1)*(0-1) do
-i := i + 1;
-ll := cdr(ll)
+currentList := l;
+index := 0;
+while (nullp(currentList)-1)*(0-1) do
+index := index + 1;
+currentList := cdr(currentList)
 od;
-return := i
+return := index
 end;
-sizetwo := listlength([1,2]);
+sizetwo := listlength([3,4]);
 a := [1,[[23]], [4,6], 6,7,8,9,0,2,2];
 sizeten := listlength(a);
 sizezero := listlength([])
