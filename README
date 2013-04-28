@@ -7,21 +7,48 @@ ________________
 
 This package contains all of the files for Assignment #2.
 
-interpreterext.py		** Contains the grammar for the original mini language along with 
+interpreterext.py		** Contains the grammar for the original mini language along with
 						** support for the following functions: cons, car, cdr, nullp, inpt
-						** and listp.  These are described in detail below.  Support for 
+						** and listp.  These are described in detail below.  Support for
 						** list concatination using '||' is also included.
-						
-interpreterext.py		** Contains the grammar for the original mini language along with 
+
+interpreterext.py		** Contains the grammar for the original mini language along with
 						** support for the following functions: cons, car, cdr, nullp, inpt
-						** and listp.  These are described in detail below.  Support for 
+						** and listp.  These are described in detail below.  Support for
 						** list concatination using '||' is also included. This version supports
 						** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
-						
+
 programext.py			** Contains the implementation for the grammar.
 
 programextgc.py			** Contains the implementation for the grammar.  This version supports
-						** Dynamic memory managment (Garbage Collection, Mark/Sweep Algorithm).
+						** Dynamic memory managment
+						(Garbage Collection, Mark/Sweep
+						Algorithm).
+
+    *** GC Notes ***
+
+    The internals of the program were refactored such that the fundamental unit
+    is the ConsCell.  A ConsCell has two pointers, car and cdr and can contain
+    Numbers, None (nil), or other ConsCells.
+
+    There is a global heap in the Heap class which allocated a fixed number of
+    HeapCells.  A HeapCell is just a wrapper around a ConsCell with some extra
+    info for tracking if it is allocated.
+
+    Tracking allocations is by setting an allocation flag on the HeapCell.
+    Finding an available cell works by scanning the list and finding the first
+    cell that is unallocated.  This is of course not as efficient, but it
+    handles fragmentation well.
+
+    Heap.collect implements mark and sweep.  It can be called manually or if
+    alloc fails (if there are no free cells).
+
+    *** CHANGING THE HEAP SIZE ***
+
+    Search for GLOBAL_HEAP and set the heap value to the desired number.  It's
+    defaulted to 20, which seems reasonable to actually test most things
+    without getting in the way.
+
 
 makefile				** Contains the grammar for the mini language.
 
@@ -70,7 +97,7 @@ predicateTest1.p		** Used to test nullp, listp, and intp.
 
 recListFromProf.p		** Used to test the recurive length function from the Professor.
 
-simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure 
+simpleGcTest.p			** Used to test a few simple assignments and functions calls to ensure
 						** Garbage collection runs properly.
 
 whileTest1.p			** Used to test the while statement.
@@ -89,13 +116,13 @@ List Grammar:
 
 Take note that lists are enclosed in '[' and ']' instead of '(' and ')'.
 
-The following functions have been added:   
+The following functions have been added:
 	cons( e, L ) - 	returns a new list, with element e prepended to the front of list L
     car( L ) - 		returns the first element in the list
     cdr( L ) - 		returns the rest of the list (minus the first element)
     nullp( L ) - 	returns 1 if L is null, 0 otherwise
     intp( e ) - 	returns 1 if e is an integer, 0 otherwise
-    listp( e ) - 	returns 1 if e is a list, 0 otherwise   
+    listp( e ) - 	returns 1 if e is a list, 0 otherwise
 
 List concatenation is also supported by using the following operator '||'
 
@@ -113,12 +140,12 @@ ___________
 
 Part 2 of the project implements the same extensions to the mini languange however it implements dynamic memory allocation and
 garbage collection using the following:
-	
-	All memory allocation is done using the cons function call.  This provides a heap of cons cells and organizes them in a list. Cons, car, cdr and nullp 
+
+	All memory allocation is done using the cons function call.  This provides a heap of cons cells and organizes them in a list. Cons, car, cdr and nullp
 	have been reimplemented to access cells located in the heap.
-	
+
 	Gabage collection is implemented using a mark and sweep algorithm.
-	
+
 RUNNING: Assignment #2, Part #2
 ___________
 TODO -- DESCRIBE HOW TO RUN..
@@ -126,4 +153,3 @@ TODO -- DESCRIBE HOW TO RUN..
 TESTING: Assignment #2, Part #2
 ___________
 All test case files (*.p) have been run through the interpreters to ensure proper operation.
-
