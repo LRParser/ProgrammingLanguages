@@ -50,6 +50,12 @@ import sys
 import copy
 import itertools
 import logging
+import collections
+from cellCount import *
+
+
+GLOBAL_NAME_TABLE = dict()
+GLOBAL_FUNCTION_TABLE = dict()
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
@@ -94,12 +100,12 @@ class MiniLangUtils :
                 # it's not a native python type
                 currentElem = val
 
-            innerSeq = Sequence(False,None, currentElem)
+            innerSeq = Sequence( currentElem)
 
             if(outerSeq is not None) :
-                outerSeq = Sequence(False,None,outerSeq,innerSeq)
+                outerSeq = Sequence(outerSeq,innerSeq)
             else :
-                outerSeq = Sequence(False,None,innerSeq)
+                outerSeq = Sequence(innerSeq)
             i = (i+1)
 
         createdList = List(outerSeq)
@@ -129,8 +135,10 @@ class ConsCell:
             pass
         elif isinstance(val, ConsCell):
             pass
+        elif isinstance(val, Sequence):
+            pass
         else:
-            raise Exception("Invalid car")
+            raise Exception("Invalid car %s" % val)
 
     @staticmethod
     def check_cdr(val):
@@ -141,8 +149,18 @@ class ConsCell:
             pass
         elif isinstance(val, ConsCell):
             pass
+        elif isinstance(val, Sequence):
+            pass
         else:
             raise Exception("Invalid cdr")
+
+    @staticmethod
+    def eval(cell):
+        if (cell is None) or (isinstance(cell, Number)):
+            yield cell
+        ConsCell.eval(cell.car)
+        ConsCell.eval(cell.cdr)
+
 
     def __to_string(self, val):
         if val is None:
@@ -153,49 +171,84 @@ class ConsCell:
     def __str__(self):
         return "( %s %s )" % (self.__to_string(self.car), self.__to_string(self.cdr))
 
+
+
+
+class HeapCell:
+    "The atomic item in the heap with some useful attributes for gc"
+    def __init__(self, cell, mark):
+        self.cell = cell
+        self.mark = mark
+        self.allocated = False
+
 class Heap :
 
     def __init__( self, maxSize=100 ) :
         self.cellHeap = list()
         self.maxSize = maxSize
+        self.allocated = 0
+        for i in range(maxSize):
+            self.cellHeap.append(HeapCell(ConsCell(), False))
 
     def hasSpace( self ) :
-        return (len(self.cellHeap)<self.maxSize)
+        num_allocated = self.get_count_allocated()
+        return ( num_allocated < self.maxSize)
 
-    def add ( self, val ) :
-        if(self.hasSpace() and not val in self.cellHeap):
-            if(not isinstance(val,Number)) :
-                raise Exception("Can only add Numbers to heap")
-            print("Adding to heap: "+str(val))
-            self.cellHeap.append(val)
-            print("Cell in use count is: "+str(len(self.cellHeap)))
-        if not(self.hasSpace()) :
-            # We failed to reclaim enough space; raise Exception
-            raise Exception('Heap is full and garbage collection failed to reclaim space')
 
-    def collectGarbage(self, nt, ft) :
-        print("Cells in use at start of GC: "+str(len(self.cellHeap)))
-        for name in nt :
-            val = nt[name]
-            if(isinstance(val,List) or isinstance(val,Number)) :
-                print("Marking: " + str(val) + "identified by: "+name + " so as to not be collected")
-                val.mark()
+    def __find_available(self):
+        for cell in self.cellHeap:
+            if not cell.allocated:
+                cell.cell.car = None
+                cell.cell.cdr = None
+                cell.allocated = True
+                return cell.cell
 
-        itemsToRemove = set()
-        for val in self.cellHeap :
-            print("Found in heap: "+str(val))
-            if(isinstance(val,List) and (not val.marked)) :
-                print("Freeing unreferenced List: "+str(val))
-                itemsToRemove.add(val)
-            elif(isinstance(val,Number) and (not val.marked)) :
-                print("Freeing unreferenced Number: "+str(val))
-                itemsToRemove.add(val)
+    def alloc(self):
+        "retuns a ConsCell.  It may invoke GC"
 
-        # Sweep
-        for val in itemsToRemove :
-            self.cellHeap.remove(val)
+        if self.hasSpace():
+            log.debug("Num cells in use: %s" % self.get_count_allocated())
+            return self.__find_available()
+        else:
+            log.debug("out of memory, collecting...")
+            self.collect(GLOBAL_NAME_TABLE, GLOBAL_FUNCTION_TABLE)
+            if not self.hasSpace():
+                #still don't have enough memory...
+                raise MemoryError
+            else:
+                return self.__find_available()
 
-        print("Cells in use at end of GC: "+str(len(self.cellHeap)))
+    def get_count_allocated(self):
+        return len(filter(lambda x: x.allocated == True, self.cellHeap))
+
+    def collect(self, nt, ft):
+        num_allocated_start = self.get_count_allocated()
+        log.debug("Starting GC with %s used cells" % num_allocated_start)
+
+        for cell in self.cellHeap:
+            cell.mark = False
+
+        for name in nt:
+            val = BuiltIns.get_cell(nt[name])
+            if isinstance(val, ConsCell):
+                log.debug("Found val %s" % val)
+                for cell in self.cellHeap:
+                    if hex(id(cell.cell)) == hex(id(val)):
+                        cell.mark = True
+
+        num_marked = len(filter(lambda x: x.mark == True, self.cellHeap))
+        log.debug("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
+        #Sweep
+        for unmarked in filter(lambda x: x.mark == False, self.cellHeap):
+            unmarked.allocated = False
+
+        num_allocated_end = self.get_count_allocated()
+        log.debug("Number of cells now allocated: %s" % num_allocated_end)
+        log.debug("Freed %s cells" % (num_allocated_start -num_allocated_end) )
+
+
+GLOBAL_HEAP = Heap(10)
+
 
 ######   CLASSES   ##################
 
@@ -252,11 +305,14 @@ class Number( Element ) :
 
 class List( Element ) :
 
-    def __init__( self, s=None ) :
-        self.sequence = s
-
-    def registerWithHeap(self, gh) :
-        gh.add(self)
+    def __init__( self, s=None, cons_cell=None ) :
+        if cons_cell is not None:
+            self.sequence = Sequence(cons_cell=cons_cell)
+        elif isinstance(s, Sequence) or s is None:
+            self.sequence = s
+        else:
+            log.debug("s: %s" % s)
+            raise TypeError
 
     def unPackSequence(self,seq):
         """ Loops through the sequence, pulling out
@@ -300,36 +356,29 @@ class List( Element ) :
     def numberIterator( self ) :
         return self.sequence.numberIterator()
 
-    def mark( self ) :
-        if (self.sequence is not None) :
-            for val in self.numberIterator() :
-                val.marked = True
+
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
         the memory addr, which doesn't work out so well when trying to compare
         test results.
         '''
-        if self.sequence is None :
-            numElements = 0
-        else :
-            numElements = len(list(self.numberIterator()))
-        return "List with %d elements" % numElements
+        return str(self.sequence)
 
 class Sequence( Expr ) :
 
-    def __init__( self, allocMemory, gh, e, s=None ) :
-        self.gh = gh
-#        if(e is None) :
-#            raise Exception("Can't create sequence with null elemenet")
-        self.element = e
-        self.sequence = s
-        if(allocMemory) :
-            consCell = BuiltIns.cons(self.element,self.sequence, self.gh)
+    def __init__( self, e=None, s=None, cons_cell=None ) :
 
-    def eval( self, nt, ft, gh ) :
-        for val in self.numberIterator() :
-            yield val.eval(nt,ft, gh)
+        if cons_cell is not None:
+            self.cons_cell = cons_cell
+        elif s is None:
+            self.cons_cell = BuiltIns.cons(e, None)
+        else:
+            self.cons_cell = BuiltIns.cons(e, s.cons_cell)
+
+    def eval( self, nt=None, ft=None ) :
+        return ConsCell.eval(self.cons_cell)
+
 
     def numberIterator( self ) :
         seq = self
@@ -339,9 +388,10 @@ class Sequence( Expr ) :
             seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
-        self.element.display(nt,ft,depth)
-        if(self.sequence is not None):
-            self.sequence.display(nt,ft,depth)
+        print self.cons_cell
+
+    def __str__(self):
+        return str(self.cons_cell)
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -441,7 +491,7 @@ class Concat( Expr ) :
         if(not isinstance(lhsList,List) or not isinstance(rhsList,List)) :
             raise Exception("Can only concat Lists")
 
-        return BuiltIns.cons(lhsList, rhsList, gh)
+        return List(cons_cell=BuiltIns.cons(lhsList, rhsList))
 
 
 
@@ -454,35 +504,52 @@ class BuiltIns :
 
     @staticmethod
     def car(listPassed) :
-        return listPassed.sequence.element
+        try:
+            return listPassed.sequence.cons_cell.car
+        except AttributeError:
+            return None
 
     @staticmethod
-    def cons_josh(x, y) :
+    def cdr(listPassed) :
+        try:
+            return listPassed.sequence.cons_cell.cdr
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def get_cell(val):
+        if isinstance(val, Sequence):
+            return val.cons_cell
+        elif isinstance(val, List):
+            return BuiltIns.get_cell(val.sequence)
+        elif isinstance(val, ConsCell):
+            #yeah!
+            return val
+        elif isinstance(val, Number):
+            return val
+        elif val is None:
+            return None
+        else:
+            return None
+
+    @staticmethod
+    def cons(x, y) :
+        x = BuiltIns.get_cell(x)
+        y = BuiltIns.get_cell(y)
+
+
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
         #Get new cons cell
         # This should come from heap.alloc() or something
-        c = ConsCell()
+        c = GLOBAL_HEAP.alloc()
 
         c.car = x
         c.cdr = y
 
         return c
 
-    @staticmethod
-    def cons(atom, listPassed, gh) :
-
-        if(isinstance(atom,Number)) :
-            gh.add(atom)
-
-        newSeq = None
-        if(listPassed is not None and listPassed.sequence is not None) :
-            newSeq = Sequence(False,gh,atom,listPassed.sequence)
-        else :
-            newSeq = Sequence(False,gh,atom)
-        newList = List(newSeq)
-        return newList
 
 class FunCall( Expr ):
     '''stores a function call:
@@ -511,7 +578,11 @@ class FunCall( Expr ):
             raise Exception("Can only call car on List")
 
         # Validation complete
-        return BuiltIns.car(listPassed)
+        val = BuiltIns.car(listPassed)
+        if isinstance(val, ConsCell):
+            return List(cons_cell=val)
+        else:
+            return val
 
     def cdr( self, nt, ft, gh):
 
@@ -530,14 +601,21 @@ class FunCall( Expr ):
         if not(isinstance(listPassed,List)) :
             raise Exception("Can only call cdr on List")
 
-        newSeq = Sequence(False,gh,listPassed.sequence)
-        newList = List(newSeq)
+        return List(cons_cell=BuiltIns.cdr(listPassed))
 
-        return newList
 
     def nullp( self, nt, ft, gh ):
         'Returns 1 if the List is Null, otherwise 0'
 
+        the_list = self.argList[0].eval(nt,ft,gh)
+        if isinstance(the_list, List):
+            x = self.car(nt, ft,gh)
+            if x is None:
+                return 1
+            else:
+                return 0
+        else:
+            return 0
         try:
             the_list = self.argList[0].eval(nt,ft, gh).eval(nt,ft, gh);
         except:
@@ -579,28 +657,24 @@ class FunCall( Expr ):
 
         # evaluate the first argument
         arg1 = self.argList[0]
-        atom = None
+        destList = None
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)):
-            # needs to be evaluated once to get to a List or Number
-            atom = arg1.eval(nt, ft, gh)
-        else :
-            atom = arg1
-        if not(isinstance(atom, Element)) :
-            raise Exception("Can only cons an element (List or Number) onto a List")
+            # needs to be evaluated twice to get to native python type
+            arg1 = arg1.eval(nt, ft,gh)
+
 
         # evaluate the second argument
         arg2 = self.argList[1]
         destList = None
         if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
-            # needs to be evaluated once to get to a List or Number
-            destList = arg2.eval(nt,ft, gh)
-        else :
-            destList = arg2
-        if not isinstance(destList, List) :
-            raise Exception("Can only cons an object onto a List")
+            # needs to be evaluated twice to get to the native python type
+            destList = arg2.eval(nt,ft,gh)
+            if isinstance(destList, int) :
+                raise Exception("Can only cons an object onto a List")
 
-        # arguments check out, so create a new list based on evalDestList
-        # then insert evalObject at the head of the list
+        return List(cons_cell=BuiltIns.cons(arg1, destList))
+
+
 
         newList = BuiltIns.cons(atom,destList,gh)
         return newList
@@ -615,14 +689,8 @@ class FunCall( Expr ):
             return func(nt,ft, gh)
         # Otherwise, call the function from the function table
         else :
-            retVal = ft[ self.name ].apply(nt, ft, self.argList, gh )
-            print("retVal is: "+str(retVal))
-            #if(isinstance(retVal,Number)) :
-            #    return retVal
-            #else :
-            #    return MiniLangUtils.pythonListToList(retVal)
-            return retVal
-    #        return ft[ self.name ].apply( nt, ft, self.argList, gh )
+            return ft[ self.name ].apply( nt, ft, self.argList, gh)
+
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
@@ -798,13 +866,14 @@ class Proc :
         self.body.display( nt, ft, depth+1 )
 
 
+
 class Program :
 
-    def __init__( self, stmtList, gh ) :
+    def __init__( self, stmtList) :
         self.stmtList = stmtList
-        self.nameTable = dict()
-        self.funcTable = dict()
-        self.globalHeap = gh
+        self.nameTable = GLOBAL_NAME_TABLE
+        self.funcTable = GLOBAL_FUNCTION_TABLE
+        self.globalHeap = GLOBAL_HEAP
 
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable, self.globalHeap )
