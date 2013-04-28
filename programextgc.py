@@ -59,7 +59,7 @@ GLOBAL_FUNCTION_TABLE = dict()
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
-   level = logging.DEBUG
+   level = logging.INFO
 )
 
 log = logging.getLogger('programext')
@@ -200,7 +200,7 @@ class Heap :
     def __init__( self, maxSize=100 ) :
         self.cellHeap = list()
         self.maxSize = maxSize
-        self.allocated = 0
+        self.allocated = False
         for i in range(maxSize):
             self.cellHeap.append(HeapCell(ConsCell()))
 
@@ -209,12 +209,20 @@ class Heap :
         return ( num_allocated < self.maxSize)
 
 
+    def is_alloc(self, cons_cell):
+        for heap_cell in self.cellHeap:
+            if hex(id(cons_cell)) == hex(id(heap_cell.cell)):
+                return heap_cell.allocated
+
+        return False
+
     def __find_available(self):
         for cell in self.cellHeap:
             if cell.allocated == False:
                 cell.cell.car = None
                 cell.cell.cdr = None
                 cell.allocated = True
+                log.debug("available cell: %s %s" % (hex(id(cell.cell)), cell.cell))
                 return cell.cell
 
     def alloc(self):
@@ -235,10 +243,14 @@ class Heap :
     def get_count_allocated(self):
         return len(filter(lambda x: x.allocated == True, self.cellHeap))
 
+    def print_cells(self):
+        for cell in self.cellHeap:
+            log.debug("Cell: %s is %s" % (hex(id(cell.cell)), cell.cell))
 
     def collect(self, nt, ft):
         num_allocated_start = self.get_count_allocated()
         log.info("Starting GC with %s used cells" % num_allocated_start)
+        self.print_cells()
 
         for cell in self.cellHeap:
             cell.cell.mark = False
@@ -254,7 +266,9 @@ class Heap :
         num_marked = len(filter(lambda x: x.cell.mark == True, self.cellHeap))
         log.info("Number of cells marked / total cells: %s / %s" % (num_marked, self.maxSize))
         #Sweep
-        for unmarked in filter(lambda x: x.cell.mark == False, self.cellHeap):
+        unmarked_list = filter(lambda x: x.cell.mark == False, self.cellHeap)
+        for unmarked in unmarked_list:
+            log.debug("freeing ConsCell: %s: %s" % (hex(id(unmarked.cell)), unmarked.cell))
             unmarked.allocated = False
             unmarked.cell.cell = None
             unmarked.cell.cell = None
@@ -264,7 +278,7 @@ class Heap :
         log.info("Freed %s cells" % (num_allocated_start -num_allocated_end) )
 
 
-GLOBAL_HEAP = Heap(10)
+GLOBAL_HEAP = Heap(20)
 
 
 ######   CLASSES   ##################
@@ -362,7 +376,7 @@ class List( Element ) :
 
     def eval( self, nt, ft, gh ) :
         if(self.sequence is not None) :
-            return list(self.sequence.eval(nt,ft, gh))
+            return list(self.sequence.eval(nt, ft))
         else :
             return list()
 
@@ -554,23 +568,36 @@ class BuiltIns :
         x = BuiltIns.get_cell(x)
         y = BuiltIns.get_cell(y)
 
-        log.debug("x: %s" % x)
-        log.debug("y: %s" % y)
-
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
         #Get new cons cell
         c = GLOBAL_HEAP.alloc()
 
-        if hex(id(c)) == hex(id(x)):
-            raise MemoryError("Out of Memory")
+        log.debug("x: %s" % x)
+        log.debug("y: %s" % y)
+        #check to see if x and y are still good
+        BuiltIns.check_alloc(x)
+        BuiltIns.check_alloc(y)
+        BuiltIns.check_dup(x,y,c)
 
         c.car = x
         c.cdr = y
 
+        log.debug("New cons: %s at: %s" % (c,hex(id(c))))
         return c
 
+    @staticmethod
+    def check_dup(x,y,c):
+        if isinstance(x,ConsCell) and hex(id(x)) == hex(id(c)):
+            raise MemoryError("Heap returned same cell value")
+        if isinstance(y,ConsCell) and hex(id(y)) == hex(id(c)):
+            raise MemoryError("Heap returned same cell value")
+
+    @staticmethod
+    def check_alloc(element):
+        if isinstance(element,ConsCell) and GLOBAL_HEAP.is_alloc(element) == False:
+            raise MemoryError("Out of Memory")
 
 class FunCall( Expr ):
     '''stores a function call:
