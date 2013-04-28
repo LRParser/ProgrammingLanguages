@@ -52,6 +52,8 @@ import itertools
 import logging
 from cellCount import *
 
+
+
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
    level = logging.DEBUG
@@ -95,12 +97,12 @@ class MiniLangUtils :
                 # it's not a native python type
                 currentElem = val
 
-            innerSeq = Sequence(False,gh, currentElem)
+            innerSeq = Sequence( currentElem)
 
             if(outerSeq is not None) :
-                outerSeq = Sequence(False,gh,outerSeq,innerSeq)
+                outerSeq = Sequence(outerSeq,innerSeq)
             else :
-                outerSeq = Sequence(False,gh,innerSeq)
+                outerSeq = Sequence(innerSeq)
             i = (i+1)
 
         createdList = List(outerSeq)
@@ -144,6 +146,14 @@ class ConsCell:
             pass
         else:
             raise Exception("Invalid cdr")
+
+    @staticmethod
+    def eval(cell):
+        if (cell is None) or (isinstance(cell, Number)):
+            yield cell
+        ConsCell.eval(cell.car)
+        ConsCell.eval(cell.cdr)
+
 
     def __to_string(self, val):
         if val is None:
@@ -197,6 +207,10 @@ class Heap :
             self.cellHeap.remove(val)
 
         print("Cells in use at end of GC: "+str(len(self.cellHeap)))
+
+
+GLOBAL_HEAP = Heap(10)
+
 
 ######   CLASSES   ##################
 
@@ -253,8 +267,11 @@ class Number( Element ) :
 
 class List( Element ) :
 
-    def __init__( self, s=None ) :
-        self.sequence = s
+    def __init__( self, s=None, cons_cell=None ) :
+        if cons_cell is not None:
+            self.sequence = Sequence(cons_cell=cons_cell)
+        else:
+            self.sequence = s
 
     def registerWithHeap(self, gh) :
         gh.add(self)
@@ -310,22 +327,23 @@ class List( Element ) :
         the memory addr, which doesn't work out so well when trying to compare
         test results.
         '''
-        return "List with %d elements" % len(list(self.numberIterator()))
+        return str(self.sequence)
 
 class Sequence( Expr ) :
 
-    def __init__( self, allocMemory, gh, e, s=None ) :
-        self.gh = gh
-        self.element = e
-        self.sequence = s
-        if(allocMemory) :
-            consCell = BuiltIns.cons(self.element,self.sequence, self.gh)
+    def __init__( self, e=None, s=None, cons_cell=None ) :
 
-    def eval( self, nt, ft ) :
-        seq = self
-        while(seq is not None) :
-            yield seq.element.eval(nt,ft)
-            seq = seq.sequence
+        log.debug("e: %s" %e)
+        log.debug("s: %s" %s)
+        if cons_cell is not None:
+            self.cons_cell = cons_cell
+        elif s is None:
+            self.cons_cell = BuiltIns.cons(e, None)
+        else:
+            self.cons_cell = BuiltIns.cons(e, s.cons_cell)
+
+    def eval( self, nt=None, ft=None ) :
+        return ConsCell.eval(self.cons_cell)
 
     def numberIterator( self ) :
         seq = self
@@ -335,9 +353,7 @@ class Sequence( Expr ) :
             seq = seq.sequence
 
     def display( self, nt, ft, depth=0 ) :
-        self.element.display(nt,ft,depth)
-        if(self.sequence is not None):
-            self.sequence.display(nt,ft,depth)
+        print self.cons_cell
 
 class Ident( Expr ) :
     '''Stores the symbol'''
@@ -470,11 +486,11 @@ class BuiltIns :
 
     @staticmethod
     def car(listPassed) :
-        return listPassed.sequence.element
+        return listPassed.sequence.cons_cell.car
 
     @staticmethod
 
-    def cons_josh(x, y) :
+    def cons(x, y) :
         ConsCell.check_car(x)
         ConsCell.check_cdr(y)
 
@@ -487,7 +503,7 @@ class BuiltIns :
 
         return c
 
-    def cons(atom, listPassed, gh) :
+    def cons_joe(atom, listPassed, gh) :
 
         if(isinstance(atom,Number)) :
             gh.add(atom)
@@ -812,11 +828,10 @@ class Proc :
 
 class Program :
 
-    def __init__( self, stmtList, gh ) :
+    def __init__( self, stmtList) :
         self.stmtList = stmtList
         self.nameTable = dict()
         self.funcTable = dict()
-        self.globalHeap = gh
 
     def eval( self ) :
         self.stmtList.eval( self.nameTable, self.funcTable )
