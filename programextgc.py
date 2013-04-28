@@ -278,7 +278,7 @@ class Heap :
         log.info("Freed %s cells" % (num_allocated_start -num_allocated_end) )
 
 
-GLOBAL_HEAP = Heap(10)
+GLOBAL_HEAP = Heap(20)
 
 
 ######   CLASSES   ##################
@@ -376,7 +376,7 @@ class List( Element ) :
 
     def eval( self, nt, ft, gh ) :
         if(self.sequence is not None) :
-            return list(self.sequence.eval(nt,ft, gh))
+            return list(self.sequence.eval(nt, ft))
         else :
             return list()
 
