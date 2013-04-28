@@ -574,9 +574,11 @@ class BuiltIns :
         #Get new cons cell
         c = GLOBAL_HEAP.alloc()
 
+        log.debug("x: %s" % x)
+        log.debug("y: %s" % y)
         #check to see if x and y are still good
-        if GLOBAL_HEAP.is_alloc(x) == False or GLOBAL_HEAP.is_alloc(y) == False:
-            raise MemoryError("Out of Memory")
+        BuiltIns.check_alloc(x)
+        BuiltIns.check_alloc(y)
 
         c.car = x
         c.cdr = y
@@ -584,6 +586,10 @@ class BuiltIns :
         log.debug("New cons: %s at: %s" % (c,hex(id(c))))
         return c
 
+    @staticmethod
+    def check_alloc(element):
+        if isinstance(element,ConsCell) and GLOBAL_HEAP.is_alloc(element) == False:
+            raise MemoryError("Out of Memory")
 
 class FunCall( Expr ):
     '''stores a function call:
