@@ -382,6 +382,8 @@ class Plus( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh ) :
+        print("lhs is: "+str(self.lhs))
+        print("rhs is: "+str(self.rhs))
         return self.lhs.eval( nt, ft, gh ) + self.rhs.eval( nt, ft, gh )
 
     def display( self, nt, ft, depth=0 ) :
@@ -414,13 +416,16 @@ class Concat( Expr ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh) :
-        lhsList = None
-        rhsList = None
+        lhsList = self.lhs
+        rhsList = self.rhs
         if(isinstance(self.lhs,Ident) or isinstance(self.lhs,FunCall)) :
             lhsList = self.lhs.eval(nt,ft,gh)
 
         if(isinstance(self.rhs,Ident) or isinstance(self.rhs,FunCall)) :
             rhsList = self.rhs.eval(nt,ft,gh)
+
+        if(not isinstance(lhsList,List) or not isinstance(rhsList,List)) :
+            raise Exception("Can only concat Lists")
 
         return BuiltIns.cons(lhsList, rhsList, gh)
 
