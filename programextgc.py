@@ -384,7 +384,16 @@ class Plus( Expr ) :
     def eval( self, nt, ft, gh ) :
         print("lhs is: "+str(self.lhs))
         print("rhs is: "+str(self.rhs))
-        return self.lhs.eval( nt, ft, gh ) + self.rhs.eval( nt, ft, gh )
+        rhsEval = self.rhs.eval(nt,ft,gh)
+        while(type(rhsEval) is not int) :
+            rhsEval = rhsEval.eval(nt,ft,gh)
+        lhsEval = self.lhs.eval(nt,ft,gh)
+        while(type(lhsEval) is not int) :
+            lhsEval = lhsEval.eval(nt,ft,gh)
+
+        print("lhsEval is: "+str(lhsEval))
+        print("rhsEval is: "+str(rhsEval))
+        return lhsEval + rhsEval
 
     def display( self, nt, ft, depth=0 ) :
         print "%sADD" % (tabstop*depth)
@@ -601,7 +610,14 @@ class FunCall( Expr ):
             return func(nt,ft, gh)
         # Otherwise, call the function from the function table
         else :
-            return ft[ self.name ].apply( nt, ft, self.argList, gh )
+            retVal = ft[ self.name ].apply(nt, ft, self.argList, gh )
+            print("retVal is: "+str(retVal))
+            #if(isinstance(retVal,Number)) :
+            #    return retVal
+            #else :
+            #    return MiniLangUtils.pythonListToList(retVal)
+            return retVal
+    #        return ft[ self.name ].apply( nt, ft, self.argList, gh )
 
     def display( self, nt, ft, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
@@ -641,6 +657,7 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
 
     def eval( self, nt, ft, gh ) :
+        print("assign: "+str(self.name)+" to: "+str(self.rhs))
         if(isinstance(self.rhs,List) or isinstance(self.rhs,Number)) :
             nt[ self.name ] = self.rhs
         else :
