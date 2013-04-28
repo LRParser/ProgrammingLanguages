@@ -579,12 +579,20 @@ class BuiltIns :
         #check to see if x and y are still good
         BuiltIns.check_alloc(x)
         BuiltIns.check_alloc(y)
+        BuiltIns.check_dup(x,y,c)
 
         c.car = x
         c.cdr = y
 
         log.debug("New cons: %s at: %s" % (c,hex(id(c))))
         return c
+
+    @staticmethod
+    def check_dup(x,y,c):
+        if isinstance(x,ConsCell) and hex(id(x)) == hex(id(c)):
+            raise MemoryError("Heap returned same cell value")
+        if isinstance(y,ConsCell) and hex(id(y)) == hex(id(c)):
+            raise MemoryError("Heap returned same cell value")
 
     @staticmethod
     def check_alloc(element):
