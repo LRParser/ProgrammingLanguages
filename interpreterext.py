@@ -189,6 +189,10 @@ def p_expr_term( p ) :
     _debugMessage("p_expr_term")
     p[0] = p[1]
 
+def p_expr_proc( p ) :
+    'expr : proc'
+    _debugMessage("p_expr_proc")
+    p[0] = p[1]
 
 def p_mult( p ) :
     'term : term TIMES fact'
@@ -244,11 +248,15 @@ def p_if( p ) :
     p[0] = IfStmt( p[2], p[4], p[6] )
 
 
-def p_def( p ) :
-    'define_stmt : DEFINE IDENT PROC LPAREN param_list RPAREN stmt_list END'
-    _debugMessage("p_define_stmt")
-    p[0] = DefineStmt( p[2], Proc( p[5], p[7] ))
+def p_proc( p ) :
+    'proc : PROC LPAREN param_list RPAREN stmt_list END'
+    _debugMessage("p_proc")
+    p[0] = Proc(p[3], p[5])
 
+def p_def( p ) :
+    'define_stmt : DEFINE IDENT proc'
+    _debugMessage("p_define_stmt")
+    p[0] = DefineStmt( p[2], p[3])
 
 def p_param_list( p ) :
     '''param_list : IDENT COMMA param_list

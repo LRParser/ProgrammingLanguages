@@ -553,7 +553,9 @@ class AssignStmt( Stmt ) :
         self.rhs = rhs
 
     def eval( self, nt, ft ) :
-        if(isinstance(self.rhs.eval(nt,ft),list)) :
+        if(isinstance(self.rhs,Proc)) :
+            ft[ self.name ] = self.rhs
+        elif isinstance(self.rhs.eval(nt,ft),Proc) :
             # We shouldn't eval the list at assignment time, per instructions
             nt[ self.name ] = self.rhs
         else :
