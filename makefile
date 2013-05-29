@@ -1,8 +1,8 @@
 PYTHON=python
 INTERPRET=interpreterext.py
-INTERPRETGC=interpreterextgc.py
 PROGRAMEXT=programext.py
-PROGRAMEXTGC=programextgc.py
+
+OBJS=$(INTERPRET) $(PROGRAMEXT)
 
 TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
@@ -22,13 +22,15 @@ LINT_FILE=pylint.rc
 FUNC1=$(TEST_INPUT_DIR1)/recLen.p
 FUNC2=$(TEST_INPUT_DIR1)/iterList.p
 
-.PHONY : clean test lint build view-part1 view-part2 view-func1 view-func2
+.PHONY : clean test lint build view-part1 view-part2 view-func1 view-func2 TAGS
 
 
 lint: clean
 	-pylint $(INTERPRET) $(PROGRAMEXT) --rcfile $(TEST_DIR)/$(LINT_FILE)
 	-pychecker $(INTERPRET) $(PROGRAMEXT)
 
+TAGS:
+	@etags $(OBJS)
 
 # This is the idea... but it needs to be cleaned up to handle a growing number of tests
 test-part1: clean
@@ -48,23 +50,3 @@ clean:
 	@rm -f *.pyc *.out parsetab.py
 	@rm -rf $(TEST_OUTPUT_DIR1)
 	@rm -rf $(TEST_OUTPUT_DIR2)
-
-view-part1 : clean
-	@more $(INTERPRET) $(PROGRAMEXT)
-
-view-part2 : clean
-	@more $(INTERPRETGC) $(PROGRAMEXTGC)
-
-view-func1: clean
-	@more $(FUNC1)
-
-view-func2: clean
-	@more $(FUNC2)
-
-build : clean
-
-run-part1: clean
-	@$(PYTHON) $(INTERPRET)
-
-run-part2: clean
-	@$(PYTHON) $(INTERPRETGC)
