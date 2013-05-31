@@ -14,25 +14,36 @@ TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
 TEST_ANSWER_DIR1=$(TEST_DIR)/answers1
 TEST_INPUT_DIR1=$(TEST_DIR)/SampleInputs1
 
-TEST_OUTPUT_DIR2=$(TEST_DIR)/output2
-TEST_ANSWER_DIR2=$(TEST_DIR)/answers2
-TEST_INPUT_DIR2=$(TEST_DIR)/SampleInputs2
 
 TESTER1=runtest1.py
-TESTER2=runtest2.py
+
 RUN_TEST1=$(PYTHON) $(TEST_DIR)/$(TESTER1)
-RUN_TEST2=$(PYTHON) $(TEST_DIR)/$(TESTER2)
-LINT_FILE=pylint.rc
 
 FUNC1=$(TEST_INPUT_DIR1)/recLen.p
 FUNC2=$(TEST_INPUT_DIR1)/iterList.p
 
-.PHONY : clean test lint build view-part1 view-part2 view-func1 view-func2 TAGS
+TOP ?= $(shell pwd)
 
+HOST=$(shell hostname)
+ASSIGNMENT=A6
 
-lint: clean
-	-pylint $(INTERPRET) $(PROGRAMEXT) --rcfile $(TEST_DIR)/$(LINT_FILE)
-	-pychecker $(INTERPRET) $(PROGRAMEXT)
+RELEASE_DIR=release
+RELEASE_FILE=$(ASSIGNMENT).tar.gz
+
+.PHONY : clean test view compile-static compile-dynamic TAGS release
+
+view: clean
+	@more $(OBJS) $(DYN_OBJS)
+
+compile-static: clean
+
+compile-dynamic: clean
+
+run-static: clean
+	@$(PYTHON) $(INTERPRET)
+
+run-dynamic: clean
+	@$(PYTHON) $(DYN_INTERP)
 
 TAGS:
 	@etags $(OBJS)
@@ -54,4 +65,11 @@ test: test-part1 test-part2
 clean:
 	@rm -f *.pyc *.out parsetab.py
 	@rm -rf $(TEST_OUTPUT_DIR1)
-	@rm -rf $(TEST_OUTPUT_DIR2)
+
+release:
+	@cd ..; \
+	cp -R $(TOP) $(ASSIGNMENT); \
+	tar -zcf $(RELEASE_FILE) --exclude .git $(ASSIGNMENT); \
+	rm -rf $(ASSIGNMENT); \
+	mkdir $(TOP)/$(RELEASE_DIR); \
+	mv $(RELEASE_FILE) $(TOP)/$(RELEASE_DIR)
