@@ -1,8 +1,13 @@
 PYTHON=python
+
 INTERPRET=interpreterext.py
+DYN_INTERP=dyn_interpret.py
+
 PROGRAMEXT=programext.py
+DYN_PROGRAM=dyn_program.py
 
 OBJS=$(INTERPRET) $(PROGRAMEXT)
+DYN_OBJS=$(DYN_INTERP) $(DYN_PROGRAM)
 
 TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
