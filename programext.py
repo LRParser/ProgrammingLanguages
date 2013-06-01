@@ -252,7 +252,10 @@ class Ident( Expr ) :
         return self.name
 
     def eval( self, nt, ft ) :
-        return nt[ self.name ]
+        try:
+            return nt[ self.name ]
+        except KeyError:
+            return ft[ self.name ]
 
     def display( self, nt, ft, depth=0 ) :
         print "%s%s" % (tabstop*depth, self.name)
@@ -680,10 +683,10 @@ class Proc :
 
         if func_globals.SCOPING == "static":
             # bind parameters in new name table (the only things there right now)
-            # use zip, bastard
             newContext = {}
-            for i in range( len( args )) :
-                newContext[ self.parList[i] ] = args[i].eval( nt, ft )
+            for (param, arg) in zip(self.parList, args):
+                log.debug("Param is: %s Arg is: %s" % (param,arg))
+                newContext[ param ] = arg.eval( nt, ft )
 
             # evaluate the function body using the new name table and the old (only)
             # function table.  Note that the proc's return value is stored as
