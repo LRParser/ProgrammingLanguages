@@ -154,6 +154,9 @@ class Number( Element ) :
     def __init__( self, v=0 ) :
         self.value = v
 
+    def __str__(self):
+        return "Number class <%s>" % self.value
+
     def eval( self, nt, ft ) :
         return self.value
 
@@ -395,6 +398,9 @@ class FunCall( Expr ):
         self.name = name
         self.argList = argList
 
+    def __str__(self):
+        return "FunCall class <%s>" % self.name
+
     def car( self, nt, ft ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
@@ -529,6 +535,7 @@ class FunCall( Expr ):
             return func(nt,ft)
         # Otherwise, call the function from the function table
         else :
+            log.debug("Calling function: %s" % self.name)
             return ft[ self.name ].apply( nt, ft, self.argList )
 
     def display( self, nt, ft, depth=0 ) :
@@ -571,6 +578,8 @@ class AssignStmt( Stmt ) :
     def eval( self, nt, ft ) :
         if(isinstance(self.rhs,Proc)) :
             ft[ self.name ] = self.rhs
+        elif func_globals.SCOPING == func_globals.DYNAMIC:
+            nt[ self.name ] = self.rhs.eval( nt, ft )
         elif isinstance(self.rhs.eval(nt,ft),Proc) :
             # We shouldn't eval the list at assignment time, per instructions
             nt[ self.name ] = self.rhs
@@ -707,13 +716,14 @@ class Proc :
 
     def apply( self, nt, ft, args ) :
 
+        log.debug("Entering apply")
 
         # sanity check, # of args
         if len( args ) is not len( self.parList ) :
             print "Param count does not match:"
             sys.exit( 1 )
 
-        if func_globals.SCOPING == "static":
+        if func_globals.SCOPING == func_globals.STATIC:
             # bind parameters in new name table (the only things there right now)
             newContext = {}
             #Make a copy of FT, this will be the new environment
@@ -750,6 +760,7 @@ class Program :
         self.funcTable = {}
 
     def eval( self ) :
+        log.debug("Eval program")
         self.stmtList.eval( self.nameTable, self.funcTable )
 
     def dump( self ) :
