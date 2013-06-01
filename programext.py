@@ -670,6 +670,9 @@ class Proc :
         self.parList = paramList
         self.body = body
 
+    def __str__(self):
+        return "Proc class <>"
+
     def _eval_body(self, nt):
         self.body.eval( nt )
         if nt.has_key( returnSymbol ) :
@@ -723,7 +726,6 @@ class Proc :
 
             self._bind_func_arg(args, nt, nt)
 
-            dump_all(nt)
             #but first, rebind and functions
             return self._eval_body(nt)
 
