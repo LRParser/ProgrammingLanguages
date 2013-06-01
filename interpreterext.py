@@ -410,9 +410,9 @@ if __name__ == '__main__':
     opt, args = p.parse_args()
 
     if opt.dynamic:
-        func_globals.SCOPING = 'dynamic'
+        func_globals.SCOPING = func_globals.DYNAMIC
         log.info("Using dynamic scoping")
     else:
-        func_globals.SCOPING = 'static'
+        func_globals.SCOPING = func_globals.STATIC
 
     main(args)
