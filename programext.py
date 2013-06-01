@@ -684,15 +684,23 @@ class Proc :
         if func_globals.SCOPING == "static":
             # bind parameters in new name table (the only things there right now)
             newContext = {}
+            #Make a copy of FT, this will be the new environment
+            newFunctionTable = copy.deepcopy(ft)
+
             for (param, arg) in zip(self.parList, args):
                 log.debug("Param is: %s Arg is: %s" % (param,arg))
+                if ft.has_key(arg.name):
+                    #Bind the existing function to the new environment name
+                    newFunctionTable[ param ] = ft[ arg.name ]
+                    log.debug("ADDED FUNCTION")
+
                 newContext[ param ] = arg.eval( nt, ft )
 
             # evaluate the function body using the new name table and the old (only)
             # function table.  Note that the proc's return value is stored as
             # 'return in its nametable
 
-            return self._eval_body(newContext, ft)
+            return self._eval_body(newContext, newFunctionTable)
 
         else:
             #just use the nt passed in from the caller
