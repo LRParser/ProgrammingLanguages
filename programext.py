@@ -66,7 +66,7 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
-def dump_all(nt, ft):
+def dump_all( nt ):
     log.debug("*** Name table dump")
     for k in nt :
         if(isinstance(nt[k],List) or isinstance(nt[k],FunCall)):
@@ -74,10 +74,6 @@ def dump_all(nt, ft):
 
         else :
             log.debug("***  %s -> %s " % ( str(k), str(nt[k]) ))
-
-    log.debug("*** Function table dump")
-    for k in ft :
-        log.debug( "***  %s" % str(k))
 
 ######   CLASSES   ##################
 
@@ -88,14 +84,14 @@ class Expr :
         raise NotImplementedError(
             'Expr: pure virtual base class.  Do not instantiate' )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         '''Given an environment and a function table, evaluates the expression,
         returns the value of the expression (an int in this grammar)'''
 
         raise NotImplementedError(
             'Expr.eval: virtual method.  Must be overridden.' )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         'For debugging.'
         raise NotImplementedError(
             'Expr.display: virtual method.  Must be overridden.' )
@@ -142,10 +138,10 @@ class Element( Expr ) :
         print("Element ctor")
         self.value = v
 
-    def eval( self, nt, ft ) :
-        return self.value.eval(nt,ft)
+    def eval( self, nt ) :
+        return self.value.eval(nt)
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
 
 class Number( Element ) :
@@ -157,10 +153,10 @@ class Number( Element ) :
     def __str__(self):
         return "Number class <%s>" % self.value
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         return self.value
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%s%i" % (tabstop*depth, self.value)
 
 class List( Element ) :
@@ -202,24 +198,24 @@ class List( Element ) :
                 # Number object, just add to the list.
                 self.values.append(val)
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
 
         evaledList = copy.deepcopy(self.values)
         for i in xrange(len(evaledList)) :
             if evaledList[i] is not None:
                 if isinstance(evaledList[i], FunCall) :
-                    funCallValue = evaledList[i].eval(nt, ft)
+                    funCallValue = evaledList[i].eval(nt)
                     if isinstance(funCallValue, List) :
-                        evaledList[i] = funCallValue.eval(nt, ft)
+                        evaledList[i] = funCallValue.eval(nt)
                     else :
                         evaledList[i] = funCallValue
                 else :
-                    evaledList[i] = evaledList[i].eval(nt,ft)
+                    evaledList[i] = evaledList[i].eval(nt)
         return evaledList
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         for val in self.values :
-                val.display(nt,ft,depth+1)
+                val.display(nt, depth+1)
 
     def __str__(self):
         '''Define a repr to have pretty printing of lists.  Otherwise, we get
@@ -242,18 +238,16 @@ class Sequence( Expr ) :
     def appendTail ( self, e ) :
         self.values.append(e)
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         evaledSeq = list()
         for val in self.values :
-            evaledSeq.append(val.eval(nt,ft))
+            evaledSeq.append(val.eval(nt))
         return evaledSeq
-        #for val in self.values :
-        #    yield val.eval(nt,ft)
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         if self.values is not None :
             for val in self.values :
-                val.display(nt, ft, depth)
+                val.display(nt, depth)
         else :
             print("Empty")
 
@@ -267,13 +261,10 @@ class Ident( Expr ) :
     def __str__(self):
         return self.name
 
-    def eval( self, nt, ft ) :
-        try:
-            return nt[ self.name ]
-        except KeyError:
-            return ft[ self.name ]
+    def eval( self, nt ) :
+        return nt[ self.name ]
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt,  depth=0 ) :
         print "%s%s" % (tabstop*depth, self.name)
 
 
@@ -288,14 +279,13 @@ class Times( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) * self.rhs.eval( nt, ft )
+    def eval( self, nt ) :
+        return self.lhs.eval( nt ) * self.rhs.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sMULT" % (tabstop*depth)
-        self.lhs.display( nt, ft, depth+1 )
-        self.rhs.display( nt, ft, depth+1 )
-        #print "%s= %i" % (tabstop*depth, self.eval( nt, ft ))
+        self.lhs.display( nt, depth+1 )
+        self.rhs.display( nt, depth+1 )
 
 
 class Plus( Expr ) :
@@ -305,14 +295,13 @@ class Plus( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) + self.rhs.eval( nt, ft )
+    def eval( self, nt ) :
+        return self.lhs.eval( nt ) + self.rhs.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sADD" % (tabstop*depth)
-        self.lhs.display( nt, ft, depth+1 )
-        self.rhs.display( nt, ft, depth+1 )
-        #print "%s= %i" % (tabstop*depth, self.eval( nt, ft ))
+        self.lhs.display( nt, depth+1 )
+        self.rhs.display( nt, depth+1 )
 
 
 class Minus( Expr ) :
@@ -322,14 +311,13 @@ class Minus( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
-        return self.lhs.eval( nt, ft ) - self.rhs.eval( nt, ft )
+    def eval( self, nt ) :
+        return self.lhs.eval( nt ) - self.rhs.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sSUB" % (tabstop*depth)
-        self.lhs.display( nt, ft, depth+1 )
-        self.rhs.display( nt, ft, depth+1 )
-        #print "%s= %i" % (tabstop*depth, self.eval( nt, ft ))
+        self.lhs.display( nt, depth+1 )
+        self.rhs.display( nt, depth+1 )
 
 
 class Concat( Expr ) :
@@ -339,7 +327,7 @@ class Concat( Expr ) :
         self.lhs = lhs
         self.rhs = rhs
 
-    def eval( self, nt, ft) :
+    def eval( self, nt) :
         if not (isinstance(self.lhs, Ident) or isinstance(self.lhs, List) or isinstance(self.lhs, FunCall)) :
             raise Exception("List concatenation requires two Lists")
         if not (isinstance(self.rhs, Ident) or isinstance(self.rhs, List) or isinstance(self.rhs, FunCall)) :
@@ -347,47 +335,45 @@ class Concat( Expr ) :
 
         if isinstance(self.lhs, Ident) :
             # since it's an Ident, it needs two-level evaluation to get to the native python list
-            lhsIdent = self.lhs.eval(nt, ft)
-            lhsListEval = lhsIdent.eval(nt, ft)
+            lhsIdent = self.lhs.eval(nt)
+            lhsListEval = lhsIdent.eval(nt)
             if not isinstance(lhsListEval, list) :
                 raise Exception("Identity must be a list for || operator")
         elif isinstance(self.lhs, FunCall) :
             # since it's a FunCall, it needs two-level evaluation to get to the native python list
-            lhsFunc = self.lhs.eval(nt, ft)
-            lhsListEval = lhsFunc.eval(nt, ft)
+            lhsFunc = self.lhs.eval(nt)
+            lhsListEval = lhsFunc.eval(nt)
             if not isinstance(lhsListEval, list) :
                 raise Exception("Function must return a List for || operator")
         else :
             # only requires one-level of evaluation to get to the native python list
-            lhsListEval = self.lhs.eval(nt, ft)
+            lhsListEval = self.lhs.eval(nt)
 
         if isinstance(self.rhs, Ident) :
             # since it's an Ident, it needs two-level evaluation to get to the native python list
-            rhsIdent = self.rhs.eval(nt, ft)
-            rhsListEval = rhsIdent.eval(nt, ft)
+            rhsIdent = self.rhs.eval(nt)
+            rhsListEval = rhsIdent.eval(nt)
             if not isinstance(rhsListEval, list) :
                 raise Exception("Identity must be a list for || operator")
         elif isinstance(self.rhs, FunCall) :
             # since it's a FunCall, it needs two-level evaluation to get to the native python list
-            rhsFunc = self.rhs.eval(nt, ft)
-            rhsListEval = rhsFunc.eval(nt, ft)
+            rhsFunc = self.rhs.eval(nt)
+            rhsListEval = rhsFunc.eval(nt)
             if not isinstance(rhsListEval, list) :
                 raise Exception("Function must return a List for || operator")
         else :
             # only requires one-level of evaluation to get to the native python list
-            rhsListEval = self.rhs.eval(nt, ft)
+            rhsListEval = self.rhs.eval(nt)
 
         extendedList = lhsListEval + rhsListEval
         return self.pythonListToList(extendedList)
 
 
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sCONCAT" % (tabstop*depth)
-        self.lhs.display( nt, ft, depth+1 )
-        self.rhs.display( nt, ft, depth+1 )
-
-
+        self.lhs.display( nt, depth+1 )
+        self.rhs.display( nt, depth+1 )
 
 
 class FunCall( Expr ):
@@ -401,7 +387,7 @@ class FunCall( Expr ):
     def __str__(self):
         return "FunCall class <%s>" % self.name
 
-    def car( self, nt, ft ) :
+    def car( self, nt ) :
         if not(len(self.argList) == 1) :
             raise Exception("Car function requires exactly 1 argument")
 
@@ -409,7 +395,7 @@ class FunCall( Expr ):
         listPassed = None
         if(isinstance(listArg,Ident)) :
             # We were passed an Ident
-            listPassed = self.argList[0].eval(nt,ft)
+            listPassed = self.argList[0].eval(nt)
         elif(isinstance(listArg,List)) :
             # We were passed a List object
             listPassed = listArg
@@ -418,14 +404,14 @@ class FunCall( Expr ):
             raise Exception("Can only call car on List")
 
         # We have a parsed List object. Call eval to get a native list
-        evaledList = listPassed.eval(nt,ft)
+        evaledList = listPassed.eval(nt)
 
         if(len(evaledList) < 1) :
             raise Exception("Can't call car on empty List")
 
         return evaledList[0]
 
-    def cdr( self, nt, ft):
+    def cdr( self, nt):
 
         listArg = self.argList[0]
         listPassed = None
@@ -433,7 +419,7 @@ class FunCall( Expr ):
         if(isinstance(listArg,Ident)) :
             # We were passed an Ident
             #            listPassed = self.argList[0].eval(nt,ft)
-            listPassed = evalIdent(listArg, nt, ft)
+            listPassed = evalIdent(listArg, nt)
         elif(isinstance(listArg,List)) :
             # We were passed a List object
             listPassed = listArg
@@ -442,18 +428,18 @@ class FunCall( Expr ):
             raise Exception("Can only call cdr on List")
 
         # We have a parsed List object. Call eval to get a native list
-        evaledList = listPassed.eval(nt,ft)
+        evaledList = listPassed.eval(nt)
 
         if(len(evaledList) < 1) :
             raise Exception("Can't call cdr on empty List")
 
         return self.pythonListToList(evaledList[1:])
 
-    def nullp( self, nt, ft ):
+    def nullp( self, nt ):
         'Returns 1 if the List is Null, otherwise 0'
 
         try:
-            the_list = self.argList[0].eval(nt,ft).eval(nt,ft);
+            the_list = self.argList[0].eval(nt).eval(nt);
         except:
             #It's not a list, so therefore, it's not null
             return 0;
@@ -463,11 +449,11 @@ class FunCall( Expr ):
             else:
                 return 0
 
-    def listp( self, nt, ft ):
+    def listp( self, nt ):
         "Returns 1 if a list, otherwise 0"
 
         try:
-            evaledArg = self.argList[0].eval(nt,ft)
+            evaledArg = self.argList[0].eval(nt)
             if isinstance(evaledArg, List) or isinstance(evaledArg, list) :
                 return 1
             else:
@@ -475,7 +461,7 @@ class FunCall( Expr ):
         except:
             return 0
 
-    def intp( self, nt, ft ):
+    def intp( self, nt ):
         "Returns 1 if it is Number, otherwise 0"
 
         try:
@@ -486,7 +472,7 @@ class FunCall( Expr ):
         except:
             return 0
 
-    def cons( self, nt, ft ) :
+    def cons( self, nt ) :
         '''Returns a new list, with element prepended to existing list'''
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
@@ -494,15 +480,15 @@ class FunCall( Expr ):
         # evaluate the first argument
         arg1 = self.argList[0]
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)) :
-            object = arg1.eval(nt, ft)
+            object = arg1.eval(nt)
             if not (isinstance(object, int) or isinstance(object, list)) :
                 # needs to be evaluated twice to get to native python type
-                evalObject = object.eval(nt,ft)
+                evalObject = object.eval(nt)
             else :
                 evalObject = object
         else :
             # only needs to be evaluated once to get to native python type
-            evalObject = arg1.eval(nt,ft)
+            evalObject = arg1.eval(nt)
         if not(isinstance(evalObject, list) or isinstance(evalObject, int)) :
             raise Exception("Can only cons an object onto a List")
 
@@ -510,12 +496,12 @@ class FunCall( Expr ):
         arg2 = self.argList[1]
         if (isinstance(arg2, Ident) or isinstance(arg2, FunCall)) :
             # needs to be evaluated twice to get to the native python type
-            destList = arg2.eval(nt,ft)
+            destList = arg2.eval(nt)
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
-            evalDestList = destList.eval(nt,ft)
+            evalDestList = destList.eval(nt)
         else :
-            evalDestList = arg2.eval(nt,ft)
+            evalDestList = arg2.eval(nt)
         if not(isinstance(evalDestList, list)) :
             raise Exception("Can only cons an object onto a List")
 
@@ -527,21 +513,21 @@ class FunCall( Expr ):
         #return newList
 
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         func = getattr(self, self.name, None)
         # Is this function defined in this class?
         if func:
             # It is, so call it (like car, cdr, etc...)
-            return func(nt,ft)
-        # Otherwise, call the function from the function table
+            return func(nt)
+        # Otherwise, call the function from the name table
         else :
             log.debug("Calling function: %s" % self.name)
-            return ft[ self.name ].apply( nt, ft, self.argList )
+            return nt[ self.name ].apply( nt, self.argList )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
         for e in self.argList :
-            e.display( nt, ft, depth+1 )
+            e.display( nt, depth+1 )
 
 
 #-------------------------------------------------------
@@ -553,14 +539,14 @@ class Stmt :
         raise NotImplementedError(
             'Stmt: pure virtual base class.  Do not instantiate' )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         '''Given an environment and a function table, evaluates the expression,
         returns the value of the expression (an int in this grammar)'''
 
         raise NotImplementedError(
             'Stmt.eval: virtual method.  Must be overridden.' )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         'For debugging.'
         raise NotImplementedError(
             'Stmt.display: virtual method.  Must be overridden.' )
@@ -575,20 +561,20 @@ class AssignStmt( Stmt ) :
         self.name = name
         self.rhs = rhs
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         if(isinstance(self.rhs,Proc)) :
-            ft[ self.name ] = self.rhs
+            nt[ self.name ] = self.rhs
         elif func_globals.SCOPING == func_globals.DYNAMIC:
-            nt[ self.name ] = self.rhs.eval( nt, ft )
-        elif isinstance(self.rhs.eval(nt,ft),Proc) :
+            nt[ self.name ] = self.rhs.eval( nt )
+        elif isinstance(self.rhs.eval(nt),Proc) :
             # We shouldn't eval the list at assignment time, per instructions
             nt[ self.name ] = self.rhs
         else :
-            nt[ self.name ] = self.rhs.eval( nt, ft )
+            nt[ self.name ] = self.rhs.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
-        self.rhs.display( nt, ft, depth+1 )
+        self.rhs.display( nt, depth+1 )
 
 
 class DefineStmt( Stmt ) :
@@ -598,12 +584,12 @@ class DefineStmt( Stmt ) :
         self.name = name
         self.proc = proc
 
-    def eval( self, nt, ft ) :
-        ft[ self.name ] = self.proc
+    def eval( self, nt ) :
+        nt[ self.name ] = self.proc
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sDEFINE %s :" % (tabstop*depth, self.name)
-        self.proc.display( nt, ft, depth+1 )
+        self.proc.display( nt, depth+1 )
 
 
 class IfStmt( Stmt ) :
@@ -618,19 +604,19 @@ class IfStmt( Stmt ) :
         self.tBody = tBody
         self.fBody = fBody
 
-    def eval( self, nt, ft ) :
-        if self.cond.eval( nt, ft ) > 0 :
-            self.tBody.eval( nt, ft )
+    def eval( self, nt ) :
+        if self.cond.eval( nt ) > 0 :
+            self.tBody.eval( nt )
         else :
-            self.fBody.eval( nt, ft )
+            self.fBody.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sIF" % (tabstop*depth)
-        self.cond.display( nt, ft, depth+1 )
+        self.cond.display( nt, depth+1 )
         print "%sTHEN" % (tabstop*depth)
-        self.tBody.display( nt, ft, depth+1 )
+        self.tBody.display( nt, depth+1 )
         print "%sELSE" % (tabstop*depth)
-        self.fBody.display( nt, ft, depth+1 )
+        self.fBody.display( nt, depth+1 )
 
 
 class WhileStmt( Stmt ) :
@@ -639,15 +625,15 @@ class WhileStmt( Stmt ) :
         self.cond = cond
         self.body = body
 
-    def eval( self, nt, ft ) :
-        while self.cond.eval( nt, ft ) > 0 :
-            self.body.eval( nt, ft )
+    def eval( self, nt ) :
+        while self.cond.eval( nt ) > 0 :
+            self.body.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sWHILE" % (tabstop*depth)
-        self.cond.display( nt, ft, depth+1 )
+        self.cond.display( nt, depth+1 )
         print "%sDO" % (tabstop*depth)
-        self.body.display( nt, ft, depth+1 )
+        self.body.display( nt, depth+1 )
 
 #-------------------------------------------------------
 
@@ -660,14 +646,14 @@ class StmtList :
     def insert( self, stmt ) :
         self.sl.insert( 0, stmt )
 
-    def eval( self, nt, ft ) :
+    def eval( self, nt ) :
         for s in self.sl :
-            s.eval( nt, ft )
+            s.eval( nt )
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
         for s in self.sl :
-            s.display( nt, ft, depth+1 )
+            s.display( nt, depth+1 )
 
 
 class Proc :
@@ -687,34 +673,34 @@ class Proc :
         self.parList = paramList
         self.body = body
 
-    def _eval_body(self, nt, ft):
-        self.body.eval( nt, ft )
+    def _eval_body(self, nt):
+        self.body.eval( nt )
         if nt.has_key( returnSymbol ) :
             return nt[ returnSymbol ]
         else :
             log.info("Error: No return value")
             sys.exit( 2 )
 
-    def _bind_func_arg(self, current_ft, new_ft, args, current_nt, new_nt):
+    def _bind_func_arg(self, args, current_nt, new_nt):
         for (param, arg) in zip(self.parList, args):
             log.debug("  Param is: %s Arg is: %s" % (param,arg))
 
             try:
                 #check for function and bind it if so
-                if current_ft.has_key(arg.name):
+                if current_nt.has_key(arg.name):
                     #Bind the existing function to the new environment name
-                    new_ft[ param ] = current_ft[arg.name]
+                    new_nt[ param ] = current_nt[arg.name]
                     log.debug("  ADDED FUNCTION")
 
             except AttributeError:
                 "it's not an arg, probably a Number, so pass"
                 pass
 
-            new_nt[ param ] = arg.eval( current_nt, current_ft )
+            new_nt[ param ] = arg.eval( current_nt)
 
 
 
-    def apply( self, nt, ft, args ) :
+    def apply( self, nt, args ) :
 
         log.debug("Entering apply")
 
@@ -725,31 +711,30 @@ class Proc :
 
         if func_globals.SCOPING == func_globals.STATIC:
             # bind parameters in new name table (the only things there right now)
-            newContext = {}
-            #Make a copy of FT, this will be the new environment
-            newFunctionTable = copy.deepcopy(ft)
+            #Make a copy of NT, this will be the new environment
+            newContext = copy.deepcopy(nt)
 
-            self._bind_func_arg(ft, newFunctionTable, args, nt, newContext)
+            self._bind_func_arg(args, nt, newContext)
 
             # evaluate the function body using the new name table and the old (only)
             # function table.  Note that the proc's return value is stored as
             # 'return in its nametable
 
-            return self._eval_body(newContext, newFunctionTable)
+            return self._eval_body(newContext)
 
         else:
             #just use the nt passed in from the caller
             log.debug("Applying dynamic scope")
 
-            self._bind_func_arg(ft, ft, args, nt, nt)
+            self._bind_func_arg(args, nt, nt)
 
-            dump_all(nt, ft)
+            dump_all(nt)
             #but first, rebind and functions
-            return self._eval_body(nt, ft)
+            return self._eval_body(nt)
 
-    def display( self, nt, ft, depth=0 ) :
+    def display( self, nt, depth=0 ) :
         print "%sPROC %s :" % (tabstop*depth, str(self.parList))
-        self.body.display( nt, ft, depth+1 )
+        self.body.display( nt, depth+1 )
 
 
 class Program :
@@ -761,7 +746,7 @@ class Program :
 
     def eval( self ) :
         log.debug("Eval program")
-        self.stmtList.eval( self.nameTable, self.funcTable )
+        self.stmtList.eval( self.nameTable )
 
     def dump( self ) :
         print "Dump of Symbol Table"
@@ -771,22 +756,19 @@ class Program :
                 print "  %s -> %s " % ( str(k), self.nameTable[k].eval(self.nameTable,self.funcTable))
             else :
                 print "  %s -> %s " % ( str(k), str(self.nameTable[k]) )
-        print "Function Table"
-        for k in self.funcTable :
-            print "  %s" % str(k)
 
     def display( self, depth=0 ) :
         print "%sPROGRAM :" % (tabstop*depth)
-        self.stmtList.display( self.nameTable, self.funcTable )
+        self.stmtList.display( self.nameTable )
 
 # FUNCTIONS
 
-def evalIdent(ident, nt, ft):
+def evalIdent(ident, nt):
 
     orig = ident
 
     while (isinstance(ident, Ident) and not isinstance(ident, List)):
-        ident = ident.eval(nt, ft)
+        ident = ident.eval(nt)
 
     if not isinstance(ident,List):
         return orig.pythonListToList(ident)
