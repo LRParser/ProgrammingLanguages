@@ -50,6 +50,7 @@ import sys
 import copy
 import itertools
 import logging
+import func_globals
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
@@ -57,7 +58,6 @@ logging.basicConfig(
 )
 
 log = logging.getLogger('programext')
-
 
 ####  CONSTANTS   ################
 
@@ -662,29 +662,39 @@ class Proc :
         self.parList = paramList
         self.body = body
 
+    def _eval_body(self, nt, ft):
+        self.body.eval( nt, ft )
+        if nt.has_key( returnSymbol ) :
+            return nt[ returnSymbol ]
+        else :
+            log.info("Error: No return value")
+            sys.exit( 2 )
+
     def apply( self, nt, ft, args ) :
-        newContext = {}
+
 
         # sanity check, # of args
         if len( args ) is not len( self.parList ) :
             print "Param count does not match:"
             sys.exit( 1 )
 
+        if func_globals.SCOPING == "static":
             # bind parameters in new name table (the only things there right now)
             # use zip, bastard
-        for i in range( len( args )) :
-            newContext[ self.parList[i] ] = args[i].eval( nt, ft )
+            newContext = {}
+            for i in range( len( args )) :
+                newContext[ self.parList[i] ] = args[i].eval( nt, ft )
 
-        # evaluate the function body using the new name table and the old (only)
-        # function table.  Note that the proc's return value is stored as
-        # 'return in its nametable
+            # evaluate the function body using the new name table and the old (only)
+            # function table.  Note that the proc's return value is stored as
+            # 'return in its nametable
 
-        self.body.eval( newContext, ft )
-        if newContext.has_key( returnSymbol ) :
-            return newContext[ returnSymbol ]
-        else :
-            print "Error:  no return value"
-            sys.exit( 2 )
+            return self._eval_body(newContext, ft)
+
+        else:
+            #just use the nt passed in from the caller
+            log.debug("Applying dynamic scope")
+            return self._eval_body(nt, ft)
 
     def display( self, nt, ft, depth=0 ) :
         print "%sPROC %s :" % (tabstop*depth, str(self.parList))
