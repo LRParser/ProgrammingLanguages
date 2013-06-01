@@ -566,11 +566,8 @@ class AssignStmt( Stmt ) :
             nt[ self.name ] = self.rhs
         elif func_globals.SCOPING == func_globals.DYNAMIC:
             nt[ self.name ] = self.rhs.eval( nt )
-        elif isinstance(self.rhs.eval(nt),Proc) :
-            # We shouldn't eval the list at assignment time, per instructions
-            nt[ self.name ] = self.rhs
         else :
-            nt[ self.name ] = self.rhs.eval( nt )
+            nt[ self.name ] = self.rhs.eval(nt)
 
     def display( self, nt, depth=0 ) :
         print "%sAssign: %s :=" % (tabstop*depth, self.name)
@@ -698,8 +695,6 @@ class Proc :
 
             new_nt[ param ] = arg.eval( current_nt)
 
-
-
     def apply( self, nt, args ) :
 
         log.debug("Entering apply")
@@ -710,10 +705,10 @@ class Proc :
             sys.exit( 1 )
 
         if func_globals.SCOPING == func_globals.STATIC:
-            # bind parameters in new name table (the only things there right now)
             #Make a copy of NT, this will be the new environment
             newContext = copy.deepcopy(nt)
 
+            # bind parameters in the newContext
             self._bind_func_arg(args, nt, newContext)
 
             # evaluate the function body using the new name table and the old (only)
