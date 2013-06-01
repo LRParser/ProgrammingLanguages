@@ -1,26 +1,20 @@
 PYTHON=python
 
 INTERPRET=interpreterext.py
-DYN_INTERP=dyn_interpret.py
-
 PROGRAMEXT=programext.py
-DYN_PROGRAM=dyn_program.py
 
 OBJS=$(INTERPRET) $(PROGRAMEXT)
-DYN_OBJS=$(DYN_INTERP) $(DYN_PROGRAM)
+
+DYN_INTERPET=$(INTERPRET) --dynamic-scope
 
 TEST_DIR=test
 TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
 TEST_ANSWER_DIR1=$(TEST_DIR)/answers1
 TEST_INPUT_DIR1=$(TEST_DIR)/SampleInputs1
 
-
 TESTER1=runtest1.py
 
 RUN_TEST1=$(PYTHON) $(TEST_DIR)/$(TESTER1)
-
-FUNC1=$(TEST_INPUT_DIR1)/recLen.p
-FUNC2=$(TEST_INPUT_DIR1)/iterList.p
 
 TOP ?= $(shell pwd)
 
@@ -33,7 +27,7 @@ RELEASE_FILE=$(ASSIGNMENT).tar.gz
 .PHONY : clean test view compile-static compile-dynamic TAGS release
 
 view: clean
-	@more $(OBJS) $(DYN_OBJS)
+	@more $(OBJS)
 
 compile-static: clean
 
@@ -43,7 +37,7 @@ run-static: clean
 	@$(PYTHON) $(INTERPRET)
 
 run-dynamic: clean
-	@$(PYTHON) $(DYN_INTERP)
+	@$(PYTHON) $(DYN_INTERPET)
 
 TAGS:
 	@etags $(OBJS)
@@ -53,12 +47,6 @@ test-part1: clean
 	@$(RUN_TEST1)
 	@echo "Checking answers"
 	@diff $(TEST_ANSWER_DIR1) $(TEST_OUTPUT_DIR1)
-
-test-part2: clean
-	@$(RUN_TEST2)
-	@echo "Checking answers"
-	@diff $(TEST_ANSWER_DIR2) $(TEST_OUTPUT_DIR2)
-
 
 test: test-part1 test-part2
 
