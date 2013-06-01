@@ -66,6 +66,19 @@ returnSymbol = 'return'
 
 tabstop = '  ' # 2 spaces
 
+def dump_all(nt, ft):
+    log.debug("*** Name table dump")
+    for k in nt :
+        if(isinstance(nt[k],List) or isinstance(nt[k],FunCall)):
+            log.debug("*** List or FunCall... skipping...")
+
+        else :
+            log.debug("***  %s -> %s " % ( str(k), str(nt[k]) ))
+
+    log.debug("*** Function table dump")
+    for k in ft :
+        log.debug( "***  %s" % str(k))
+
 ######   CLASSES   ##################
 
 class Expr :
@@ -673,6 +686,25 @@ class Proc :
             log.info("Error: No return value")
             sys.exit( 2 )
 
+    def _bind_func_arg(self, current_ft, new_ft, args, current_nt, new_nt):
+        for (param, arg) in zip(self.parList, args):
+            log.debug("  Param is: %s Arg is: %s" % (param,arg))
+
+            try:
+                #check for function and bind it if so
+                if current_ft.has_key(arg.name):
+                    #Bind the existing function to the new environment name
+                    new_ft[ param ] = current_ft[arg.name]
+                    log.debug("  ADDED FUNCTION")
+
+            except AttributeError:
+                "it's not an arg, probably a Number, so pass"
+                pass
+
+            new_nt[ param ] = arg.eval( current_nt, current_ft )
+
+
+
     def apply( self, nt, ft, args ) :
 
 
@@ -687,14 +719,7 @@ class Proc :
             #Make a copy of FT, this will be the new environment
             newFunctionTable = copy.deepcopy(ft)
 
-            for (param, arg) in zip(self.parList, args):
-                log.debug("Param is: %s Arg is: %s" % (param,arg))
-                if ft.has_key(arg.name):
-                    #Bind the existing function to the new environment name
-                    newFunctionTable[ param ] = ft[ arg.name ]
-                    log.debug("ADDED FUNCTION")
-
-                newContext[ param ] = arg.eval( nt, ft )
+            self._bind_func_arg(ft, newFunctionTable, args, nt, newContext)
 
             # evaluate the function body using the new name table and the old (only)
             # function table.  Note that the proc's return value is stored as
@@ -705,6 +730,11 @@ class Proc :
         else:
             #just use the nt passed in from the caller
             log.debug("Applying dynamic scope")
+
+            self._bind_func_arg(ft, ft, args, nt, nt)
+
+            dump_all(nt, ft)
+            #but first, rebind and functions
             return self._eval_body(nt, ft)
 
     def display( self, nt, ft, depth=0 ) :
