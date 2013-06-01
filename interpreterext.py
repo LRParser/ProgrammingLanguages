@@ -27,6 +27,8 @@
 
 import sys
 from programext import *
+import optparse
+import func_globals
 
 # Debug Flag
 DEBUG = None
@@ -368,19 +370,19 @@ def test_parser(data) :
     yacc.parse(data)
 
 
-def main() :
+def main(args) :
     """ Main method.
         Will process file input or text input
         and will execute the scanner and the parser.
     """
     data = []
-    nArgs = len(sys.argv) - 1
+    nArgs = len(args) - 1
     if nArgs == 1:
         # One argument, hopefully it a filename.
         # If not, it will error out when attempting
         # to open.
         try:
-            fSpec = sys.argv[1]
+            fSpec = args[1]
             _debugMessage("Reading %s" % fSpec)
             data = open(fSpec, 'r').read()
         except Exception as e:
@@ -398,4 +400,19 @@ def main() :
     test_parser(data)
 
 if __name__ == '__main__':
-    main()
+    p = optparse.OptionParser()
+
+    p.add_option("-d", "--dynamic-scope", action="store_true", dest="dynamic",
+    help="Evaluate the program with dynamic scoping rules")
+
+    p.set_defaults(dynamic=False)
+
+    opt, args = p.parse_args()
+
+    if opt.dynamic:
+        func_globals.SCOPING = 'dynamic'
+        log.info("Using dynamic scoping")
+    else:
+        func_globals.SCOPING = 'static'
+
+    main(args)
