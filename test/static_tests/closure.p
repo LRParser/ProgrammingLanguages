@@ -14,5 +14,6 @@ bar :=
         return := f(0)
     end;
 c := foo(0);
+b := 7;
 d := bar(0);
 e := c(0)
