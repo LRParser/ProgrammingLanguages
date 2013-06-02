@@ -1,21 +1,39 @@
-Group #9 Assignment #2
+Group #9 Assignment #6
 	Jon Boone
 	Joshua Datko
 	Paul DeMicco
 	Joseph Heenan
 ________________
 
-This package contains all of the files for Assignment #2.
-
 =======
 interpreterext.py
 
-** Contains the grammar for the original mini language along with
+Contains the grammar for the original mini language.  The syntax change was to
+change the define statement to:
 
+'define_stmt : DEFINE IDENT proc'
+
+from:
+
+'define_stmt : DEFINE IDENT PROC LPAREN param_list RPAREN stmt_list END'
 
 programext.py
 
-** Contains the implementation for the grammar.
+Implements functions as first class citizens in the mini-language.  The major
+high level features were implemented:
+
+* Removed the function table.  Since functions are now first class, they are
+  treated as variables.
+* Lexical scoping: we extend the environment in the "apply" function by
+  creating a new name table and binding the parameters with the evaluated
+  arguments for that particular function.
+* Assign Statements were modified to add Procs to the name table directly.
+* Dynamic scoping: In "apply" we use the caller's environment to bind the
+  parameters and arguments instead of extending the environment.
+
+func_globals.py
+
+Global variable to keep track of what scoping rules are in play.
 
 
 makefile
@@ -105,39 +123,44 @@ make test
 
 Runs all the tests described below.
 
+make view-tests
+---------------
+
+Conveniently view all test files.
+
 -------------------------------------------------------------------------------
 
-TESTING: Assignment #2, Part #1
-___________
-All test case files (*.p) have been run through the interpreters to ensure proper operation.
+TESTING:
 
 
-VIEWING FUNCTIONS: Assignment #2, Part #3, Length Functions
-__________
-
-The following makefile targets are supported:
-
-view-func1: This will show the iterative length function in the mini language. This function was built using the sample code posted by instructor on the Discussion board, with modified test data
-
-view-func2: This will show the recursive length function in the mini language. This function was build using the sample code posted by instructor on the Discussion board, with modified test data
+All test case files (*.p) have been run through the interpreters to ensure
+proper operation.
 
 
-DESCRIPTION: Assignment #2, Part #2
-___________
+static_tests/add1Func.p:
 
-Part 2 of the project implements the same extensions to the mini languange however it implements dynamic memory allocation and
-garbage collection using the following:
+Tests assigning a function to a variable and then invoking said variable with a
+function call.
 
-	All memory allocation is done using the cons function call.  This provides a heap of cons cells and organizes them in a list. Cons, car, cdr and nullp
-	have been reimplemented to access cells located in the heap.
+static_tests/func_param1.p:
 
-	Gabage collection is implemented using a mark and sweep algorithm.
+Tests passing a function as a parameter and invoking said function in the new
+function.
 
-RUNNING: Assignment #2, Part #2
-___________
+static_tests/makeAdder.p:
 
-Can be run via make run-part2 < myinputfile (where you substitute myinputfile for an appropriate mini language input file)
+Tests nested functions and returning functions from other functions.
 
-TESTING: Assignment #2, Part #2
-___________
-All test case files (*.p) have been run through the interpreters to ensure proper operation.
+static_tests/nestedFuncs.p:
+
+Tests successive function calls from functions assigned to variables.
+
+dyn_tests/add1.p:
+
+Uses dynamic scope to implement a function that will result in an unbound
+variable if using static scope.  (i.e. only works dynamically.)
+
+dyn_tests/static_dynamic.p:
+
+A program with two different results in the two approaches (specifically the
+"b" is different).

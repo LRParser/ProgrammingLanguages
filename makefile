@@ -21,7 +21,7 @@ RELEASE_DIR=release
 RELEASE_FILE=$(ASSIGNMENT).tar.gz
 
 
-.PHONY : clean test view compile-static compile-dynamic TAGS release
+.PHONY : clean test view compile-static compile-dynamic TAGS release view-tests
 
 run-test =                                        \
 	@for file in $(2)*;                       \
@@ -29,8 +29,6 @@ run-test =                                        \
 		echo "\n*** Running $$file";      \
 		$(1) < $$file;                    \
 	done;
-
-
 
 view: clean
 	@more $(OBJS)
@@ -60,6 +58,8 @@ test: clean
 	@echo "********************"
 	$(call run-test, $(PYTHON) $(DYN_INTERPET), $(DYNAMIC_TEST_DIR))
 
+view-tests:
+	@more $(STATIC_TEST_DIR)* $(DYNAMIC_TEST_DIR)*
 
 
 clean:
