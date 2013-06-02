@@ -8,13 +8,9 @@ OBJS=$(INTERPRET) $(PROGRAMEXT)
 DYN_INTERPET=$(INTERPRET) --dynamic-scope
 
 TEST_DIR=test
-TEST_OUTPUT_DIR1=$(TEST_DIR)/output1
-TEST_ANSWER_DIR1=$(TEST_DIR)/answers1
-TEST_INPUT_DIR1=$(TEST_DIR)/SampleInputs1
+STATIC_TEST_DIR=$(TEST_DIR)/static_tests/
+DYNAMIC_TEST_DIR=$(TEST_DIR)/dyn_tests/
 
-TESTER1=runtest1.py
-
-RUN_TEST1=$(PYTHON) $(TEST_DIR)/$(TESTER1)
 
 TOP ?= $(shell pwd)
 
@@ -24,7 +20,17 @@ ASSIGNMENT=A6
 RELEASE_DIR=release
 RELEASE_FILE=$(ASSIGNMENT).tar.gz
 
+
 .PHONY : clean test view compile-static compile-dynamic TAGS release
+
+run-test =                                        \
+	@for file in $(2)*;                       \
+	do                                        \
+		echo "\n*** Running $$file";      \
+		$(1) < $$file;                    \
+	done;
+
+
 
 view: clean
 	@more $(OBJS)
@@ -42,13 +48,19 @@ run-dynamic: clean
 TAGS:
 	@etags $(OBJS)
 
-# This is the idea... but it needs to be cleaned up to handle a growing number of tests
-test-part1: clean
-	@$(RUN_TEST1)
-	@echo "Checking answers"
-	@diff $(TEST_ANSWER_DIR1) $(TEST_OUTPUT_DIR1)
 
-test: test-part1 test-part2
+test: clean
+	@echo "********************"
+	@echo "Running Static Tests"
+	@echo "********************"
+	$(call run-test, $(PYTHON) $(INTERPRET), $(STATIC_TEST_DIR))
+
+	@echo "********************"
+	@echo "Running Dynamic Tests"
+	@echo "********************"
+	$(call run-test, $(PYTHON) $(DYN_INTERPET), $(DYNAMIC_TEST_DIR))
+
+
 
 clean:
 	@rm -f *.pyc *.out parsetab.py
