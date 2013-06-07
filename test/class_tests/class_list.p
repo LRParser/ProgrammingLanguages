@@ -1,6 +1,7 @@
 class list(init)
     L := init;
-    Car := proc(L) return := L end
+    Car := proc() return := car(L) end
 end;
 
-L := list(5)
+L := list([1,2]);
+x := L.Car()
