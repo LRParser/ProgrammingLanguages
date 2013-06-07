@@ -400,9 +400,11 @@ class FunCall( Expr ):
             # We were passed a List object
             listPassed = listArg
 
-        if not(isinstance(listPassed,List)) :
+        # ADDED 2013.06.04 - PJD, Convert to a List from Python List.
+        if isinstance(listPassed, list):
+            listPassed = self.pythonListToList(listPassed)
+        elif not(isinstance(listPassed,List)) :
             raise Exception("Can only call car on List")
-
         # We have a parsed List object. Call eval to get a native list
         evaledList = listPassed.eval(nt)
 
@@ -424,7 +426,10 @@ class FunCall( Expr ):
             # We were passed a List object
             listPassed = listArg
 
-        if not(isinstance(listPassed,List)) :
+        # ADDED 2013.06.04 - PJD, Convert to a List from Python List.
+        if isinstance(listPassed, list):
+            listPassed = self.pythonListToList(listPassed)
+        elif not(isinstance(listPassed,List)) :
             raise Exception("Can only call cdr on List")
 
         # We have a parsed List object. Call eval to get a native list
@@ -731,6 +736,78 @@ class Proc :
 
     def display( self, nt, depth=0 ) :
         print "%sPROC %s :" % (tabstop*depth, str(self.parList))
+        self.body.display( nt, depth+1 )
+
+class Class:
+    def __init__( self, className,paramList, body ) :
+        '''expects a list of formal parameters (variables, as strings), and a
+        StmtList'''
+
+        self.className = className
+        self.parList = paramList
+        self.body = body
+
+    def __str__(self):
+        return "Class class <>"
+
+    def _eval_body(self, nt):
+        self.body.eval( nt )
+        if nt.has_key( returnSymbol ) :
+            return nt[ returnSymbol ]
+        else :
+            log.info("Error: No return value")
+            sys.exit( 2 )
+
+    def _bind_func_arg(self, args, current_nt, new_nt):
+        for (param, arg) in zip(self.parList, args):
+            log.debug("  Param is: %s Arg is: %s" % (param,arg))
+
+            try:
+                #check for function and bind it if so
+                if current_nt.has_key(arg.name):
+                    #Bind the existing function to the new environment name
+                    new_nt[ param ] = current_nt[arg.name]
+                    log.debug("  ADDED FUNCTION")
+
+            except AttributeError:
+                "it's not an arg, probably a Number, so pass"
+                pass
+
+            new_nt[ param ] = arg.eval( current_nt)
+
+    def apply( self, nt, args ) :
+
+        log.debug("Entering apply")
+
+        # sanity check, # of args
+        if len( args ) is not len( self.parList ) :
+            print "Param count does not match:"
+            sys.exit( 1 )
+
+        if func_globals.SCOPING == func_globals.STATIC:
+            #Make a copy of NT, this will be the new environment
+            newContext = copy.deepcopy(nt)
+
+            # bind parameters in the newContext
+            self._bind_func_arg(args, nt, newContext)
+
+            # evaluate the function body using the new name table and the old (only)
+            # function table.  Note that the proc's return value is stored as
+            # 'return in its nametable
+
+            return self._eval_body(newContext)
+
+        else:
+            #just use the nt passed in from the caller
+            log.debug("Applying dynamic scope")
+
+            self._bind_func_arg(args, nt, nt)
+
+            #but first, rebind and functions
+            return self._eval_body(nt)
+
+    def display( self, nt, depth=0 ) :
+        print "%sCLASS %s :" % (tabstop*depth, str(self.parList))
         self.body.display( nt, depth+1 )
 
 

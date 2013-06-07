@@ -62,7 +62,8 @@ tokens = (
     'IDENT',
     'LBRACKET',
     'RBRACKET',
-    'LISTCONCATENATOR'
+    'LISTCONCATENATOR',
+    'CLASS'
 )
 
 # These are all caught in the IDENT rule, typed there.
@@ -76,7 +77,8 @@ reserved = {
     'fi'      : 'FI',
     'define'  : 'DEFINE',
     'proc'    : 'PROC',
-    'end'     : 'END'
+    'end'     : 'END',
+    'class'   : 'CLASS'
 }
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -154,14 +156,13 @@ def p_stmt_list( p ) :
         p[3].insert( p[1] )
         p[0] = p[3]
 
-
 def p_stmt( p ) :
     '''stmt : assign_stmt
                 | while_stmt
                 | if_stmt
+                | class
                 | define_stmt'''
     p[0] = p[1]
-
 
 def p_add( p ) :
     'expr : expr PLUS term'
@@ -194,6 +195,11 @@ def p_expr_term( p ) :
 def p_expr_proc( p ) :
     'expr : proc'
     _debugMessage("p_expr_proc")
+    p[0] = p[1]
+
+def p_expr_class( p ) :
+    'expr : class'
+    _debugMessage("p_expr_class")
     p[0] = p[1]
 
 def p_mult( p ) :
@@ -254,6 +260,11 @@ def p_proc( p ) :
     'proc : PROC LPAREN param_list RPAREN stmt_list END'
     _debugMessage("p_proc")
     p[0] = Proc(p[3], p[5])
+
+def p_class( p ) :
+    'class : CLASS IDENT LPAREN param_list RPAREN stmt_list END'
+    _debugMessage("p_class")
+    p[0] = Class(p[2],p[4], p[6])
 
 def p_def( p ) :
     'define_stmt : DEFINE IDENT proc'
