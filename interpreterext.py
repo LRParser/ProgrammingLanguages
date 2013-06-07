@@ -63,7 +63,8 @@ tokens = (
     'LBRACKET',
     'RBRACKET',
     'LISTCONCATENATOR',
-    'CLASS'
+    'CLASS',
+    'DOT'
 )
 
 # These are all caught in the IDENT rule, typed there.
@@ -78,7 +79,8 @@ reserved = {
     'define'  : 'DEFINE',
     'proc'    : 'PROC',
     'end'     : 'END',
-    'class'   : 'CLASS'
+    'class'   : 'CLASS',
+    'dot'   : 'DOT'
 }
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -99,6 +101,7 @@ t_COMMA		   = r','
 t_LBRACKET         = r'\['
 t_RBRACKET         = r'\]'
 t_LISTCONCATENATOR = r'\|\|'
+t_DOT		   = r'\.'
 
 def t_IDENT( t ):
     #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -273,10 +276,13 @@ def p_def( p ) :
 
 def p_param_list( p ) :
     '''param_list : IDENT COMMA param_list
-                | IDENT'''
+                | IDENT
+                | '''
     _debugMessage("p_param_list")
     if len( p ) == 2 :  # single param => new list
         p[0] = [ p[1] ]
+    elif len( p ) == 1 :
+        p[0] = None
     else :  # we have a param_list, keep adding to front
         p[3].insert( 0, p[1] )
         p[0] = p[3]
