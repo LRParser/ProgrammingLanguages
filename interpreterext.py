@@ -31,7 +31,7 @@ import optparse
 import func_globals
 
 # Debug Flag
-DEBUG = None
+DEBUG = True
 
 ######   LEXER   ###############################
 # Note:  This is precisely the same lexer that exp1 uses.  Could've pulled
@@ -181,10 +181,13 @@ def p_sub( p ) :
 
 def p_expr_list( p ) :
     '''expr_list : element COMMA expr_list
-                | element'''
+                | element
+                | '''
     _debugMessage("p_expr_list")
     if len( p ) == 2 :  # single expr => new list
         p[0] = [ p[1] ]
+    elif len( p ) == 1 :
+        p[0] = None
     else :  # we have a expr_list, keep adding to front
         p[3].insert( 0, p[1] )
         p[0] = p[3]

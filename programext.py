@@ -531,8 +531,11 @@ class FunCall( Expr ):
 
     def display( self, nt, depth=0 ) :
         print "%sFunction Call: %s, args:" % (tabstop*depth, self.name)
-        for e in self.argList :
-            e.display( nt, depth+1 )
+        if(self.argList != None) :
+            for e in self.argList :
+                e.display( nt, depth+1 )
+        else:
+            print "No args required."
 
 
 #-------------------------------------------------------
@@ -687,30 +690,32 @@ class Proc :
             sys.exit( 2 )
 
     def _bind_func_arg(self, args, current_nt, new_nt):
-        for (param, arg) in zip(self.parList, args):
-            log.debug("  Param is: %s Arg is: %s" % (param,arg))
+        if(self.parList != None) :
+            for (param, arg) in zip(self.parList, args):
+                log.debug("  Param is: %s Arg is: %s" % (param,arg))
 
-            try:
-                #check for function and bind it if so
-                if current_nt.has_key(arg.name):
-                    #Bind the existing function to the new environment name
-                    new_nt[ param ] = current_nt[arg.name]
-                    log.debug("  ADDED FUNCTION")
+                try:
+                    #check for function and bind it if so
+                    if current_nt.has_key(arg.name):
+                        #Bind the existing function to the new environment name
+                        new_nt[ param ] = current_nt[arg.name]
+                        log.debug("  ADDED FUNCTION")
 
-            except AttributeError:
-                "it's not an arg, probably a Number, so pass"
-                pass
+                except AttributeError:
+                    "it's not an arg, probably a Number, so pass"
+                    pass
 
-            new_nt[ param ] = arg.eval( current_nt)
+                new_nt[ param ] = arg.eval( current_nt)
 
     def apply( self, nt, args ) :
 
         log.debug("Entering apply")
 
         # sanity check, # of args
-        if len( args ) is not len( self.parList ) :
-            print "Param count does not match:"
-            sys.exit( 1 )
+        if (self.parList != None):
+            if len( args ) is not len( self.parList ) :
+                print "Param count does not match:"
+                sys.exit( 1 )
 
         if func_globals.SCOPING == func_globals.STATIC:
             #Make a copy of NT, this will be the new environment
