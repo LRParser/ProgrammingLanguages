@@ -1,13 +1,13 @@
-class list(init)
-    L := init;
+class list(X)
+    L := X;
     Cons := proc(x) L := cons(x,L); return := L end;
     Car := proc() return := car(L) end;
     Cdr := proc() return := cdr(L) end
 end;
 
-L := list([]);
-T := L.Cons(3);
-T := L.Cons(2);
-T := L.Cons(1);
-x := L.Car();
-M := L.Cdr()
+Q := list([]);
+T := Q.Cons(3);
+T := Q.Cons(2);
+T := Q.Cons(1);
+x := Q.Car();
+M := Q.Cdr()

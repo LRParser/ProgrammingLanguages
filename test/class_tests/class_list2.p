@@ -1,3 +1,4 @@
-class ClassType(init)
+class ClassType(x)
     p := x+1
-end
+end;
+t := ClassType(1)

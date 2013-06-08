@@ -54,10 +54,13 @@ import func_globals
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
-   level = logging.INFO
+   level = logging.DEBUG
 )
 
 log = logging.getLogger('programext')
+
+
+GLOBAL_CLASS_TABLE = {}
 
 ####  CONSTANTS   ################
 
@@ -377,41 +380,25 @@ class MethodCall ( Expr ) :
     ''' stores a method call:
       - its name, and arguments'''
 
-    def __init__( self, name, argList ) :
+    def __init__( self, name, funCall ) :
         self.name = name
-        self.argList = argList
+        self.funCall = funCall
 
     def __str__(self):
         return "MethodCall class <%s>" % self.name
 
     def eval( self, nt ) :
-        func = getattr(self, self.name, None)
-        if func:
-            return func(nt)
-        else:
-            log.debug("Undefined Method: %s" % self.name)
-            raise NotImplementedError('Undefined Method')
-        
+#        log.debug("Getting class for: "+self.name) 
+#        classObj = nt[self.name]
+#        log.debug("Bound to: "+str(classObj))
+#        log.debug("Trying to find proc: "+str(self.funCall.name))
+#        proc = classObj.getProc(self.funCall.name)
+#        proc.apply(self.argList)       
 
-
-class MethodCall ( Expr ) :
-    ''' stores a method call:
-      - its name, and arguments'''
-
-    def __init__( self, name, argList ) :
-        self.name = name
-        self.argList = argList
-
-    def __str__(self):
-        return "MethodCall class <%s>" % self.name
-
-    def eval( self, nt ) :
-        func = getattr(self, self.name, None)
-        if func:
-            return func(nt)
-        else:
-            log.debug("Undefined Method: %s" % self.name)
-            raise NotImplementedError('Undefined Method')
+        return self.funCall.eval(nt)
+ 
+    def display(self, nt, depth=0) :
+        print("%sMETHODCALL %s" % (tabstop*depth, self.name))
 
 class FunCall( Expr ):
     '''stores a function call:
@@ -541,7 +528,7 @@ class FunCall( Expr ):
             destList = arg2.eval(nt)
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
-            evalDestList = destList.eval(nt)
+            evalDestList = destList
         else :
             evalDestList = arg2.eval(nt)
         if not(isinstance(evalDestList, list)) :
@@ -690,8 +677,7 @@ class StmtList :
 
     def eval( self, nt ) :
         for s in self.sl :
-            if(not(isinstance(s,Class))) :
-                s.eval( nt )
+            s.eval( nt )
 
     def display( self, nt, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
@@ -724,8 +710,7 @@ class Proc :
         if nt.has_key( returnSymbol ) :
             return nt[ returnSymbol ]
         else :
-            log.info("Error: No return value")
-            sys.exit( 2 )
+            return self
 
     def _bind_func_arg(self, args, current_nt, new_nt):
         if(self.parList != None) :
@@ -781,25 +766,37 @@ class Proc :
         print "%sPROC %s :" % (tabstop*depth, str(self.parList))
         self.body.display( nt, depth+1 )
 
-class Class:
-    def __init__( self, className,paramList, body ) :
+class Class(Proc):
+    def __init__( self, className, proc) :
         '''expects a list of formal parameters (variables, as strings), and a
         StmtList'''
 
         self.className = className
-        self.parList = paramList
-        self.body = body
+        self.proc = proc
+        self.body = self.proc.body
+        self.parList = self.proc.parList
 
     def __str__(self):
         return "Class class <>"
+
+    def eval(self,nt) :
+        log.debug("Binding class %s to nametable" % (self.className))
+        GLOBAL_CLASS_TABLE[self.className] = self
+        nt[self.className] = self
+
+    def getProc(self, procName) :
+        for stmt in self.proc.body.sl :
+            log.debug("Found stmt: "+str(stmt))
+            if(isinstance(stmt,AssignStmt)):
+                log.debug("Assign stmt name is: "+stmt.name)
+                log.debug("RHS name is: "+str(stmt.rhs))
+                #return stmt.rhs
+        return None
 
     def _eval_body(self, nt):
         self.body.eval( nt )
         if nt.has_key( returnSymbol ) :
             return nt[ returnSymbol ]
-        else :
-            log.info("Error: No return value")
-            sys.exit( 2 )
 
     def _bind_func_arg(self, args, current_nt, new_nt):
         for (param, arg) in zip(self.parList, args):
@@ -820,7 +817,7 @@ class Class:
 
     def apply( self, nt, args ) :
 
-        log.debug("Entering apply")
+        log.debug("Entering class apply")
 
         # sanity check, # of args
         if len( args ) is not len( self.parList ) :
@@ -828,17 +825,18 @@ class Class:
             sys.exit( 1 )
 
         if func_globals.SCOPING == func_globals.STATIC:
-            #Make a copy of NT, this will be the new environment
-            newContext = copy.deepcopy(nt)
-
+            log.debug("Eval class body")
+            newContext = nt # {}
             # bind parameters in the newContext
             self._bind_func_arg(args, nt, newContext)
+            self._eval_body(newContext)
+            return self
 
             # evaluate the function body using the new name table and the old (only)
             # function table.  Note that the proc's return value is stored as
             # 'return in its nametable
 
-            return self._eval_body(newContext)
+            #return self._eval_body(newContext)
 
         else:
             #just use the nt passed in from the caller
@@ -850,8 +848,8 @@ class Class:
             return self._eval_body(nt)
 
     def display( self, nt, depth=0 ) :
-        print "%sCLASS %s :" % (tabstop*depth, str(self.parList))
-        self.body.display( nt, depth+1 )
+        print "%sCLASS %s :" % (tabstop*depth, str(self.proc))
+        self.proc.display( nt, depth+1 )
 
 
 class Program :

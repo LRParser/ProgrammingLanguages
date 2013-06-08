@@ -272,10 +272,12 @@ def p_proc( p ) :
     _debugMessage("p_proc")
     p[0] = Proc(p[3], p[5])
 
+
 def p_class( p ) :
     'class : CLASS IDENT LPAREN param_list RPAREN stmt_list END'
     _debugMessage("p_class")
-    p[0] = Class(p[2],p[4], p[6])
+    classProc = Proc(p[4],p[6])
+    p[0] = Class(p[2],classProc)
 
 def p_def( p ) :
     'define_stmt : DEFINE IDENT proc'
