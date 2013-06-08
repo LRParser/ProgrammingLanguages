@@ -378,12 +378,12 @@ class MethodCall ( Expr ) :
     ''' stores a method call:
       - its name, and arguments'''
 
-    def __init__( self, name, argList ) :
+    def __init__( self, name, funCall ) :
         self.name = name
-        self.argList = argList
+        self.funCall = funCall
 
     def __str__(self):
-        return "MethodCall class <%s>" % self.name
+        return "MethodCall class <%s> Function <%s>" % (self.name, self.funCall)
 
     def eval( self, nt ) :
         func = getattr(self, self.name, None)
@@ -394,7 +394,7 @@ class MethodCall ( Expr ) :
             raise NotImplementedError('Undefined Method')
 
     def display( self, nt, depth=0 ) :
-        print "%sMethod Call: %s, args:" % (tabstop*depth, self.name)
+        print "%sMethod Call: Class %s, %s:" % (tabstop*depth, self.name, self.funCall)
         
 
 class FunCall( Expr ):
