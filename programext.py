@@ -690,7 +690,8 @@ class StmtList :
 
     def eval( self, nt ) :
         for s in self.sl :
-            s.eval( nt )
+            if(not(isinstance(s,Class))) :
+                s.eval( nt )
 
     def display( self, nt, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
