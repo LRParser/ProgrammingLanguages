@@ -297,6 +297,11 @@ def p_func_call( p ) :
     p[0] = FunCall( p[1], p[3] )
 
 
+def p_method_call(p) :
+    'method_call : IDENT DOT func_call'
+    _debugMessage("p_method_call")
+    p[0] = MethodCall( p[1], p[3] )
+
 # List parsing rules #
 def p_list_lbracket_sequence_rbracket(p):
     'list : LBRACKET sequence RBRACKET'
