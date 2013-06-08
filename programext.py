@@ -393,6 +393,10 @@ class MethodCall ( Expr ) :
             log.debug("Undefined Method: %s" % self.name)
             raise NotImplementedError('Undefined Method')
 
+    def display( self, nt, depth=0 ) :
+        print "%sMethod Call: %s, args:" % (tabstop*depth, self.name)
+        
+
 class FunCall( Expr ):
     '''stores a function call:
       - its name, and arguments'''
