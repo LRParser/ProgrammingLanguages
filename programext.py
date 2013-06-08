@@ -368,12 +368,30 @@ class Concat( Expr ) :
         extendedList = lhsListEval + rhsListEval
         return self.pythonListToList(extendedList)
 
-
-
     def display( self, nt, depth=0 ) :
         print "%sCONCAT" % (tabstop*depth)
         self.lhs.display( nt, depth+1 )
         self.rhs.display( nt, depth+1 )
+
+class MethodCall ( Expr ) :
+    ''' stores a method call:
+      - its name, and arguments'''
+
+    def __init__( self, name, argList ) :
+        self.name = name
+        self.argList = argList
+
+    def __str__(self):
+        return "MethodCall class <%s>" % self.name
+
+    def eval( self, nt ) :
+        func = getattr(self, self.name, None)
+        if func:
+            return func(nt)
+        else:
+            log.debug("Undefined Method: %s" % self.name)
+            raise NotImplementedError('Undefined Method')
+        
 
 
 class FunCall( Expr ):

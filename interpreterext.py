@@ -243,6 +243,11 @@ def p_fact_funcall( p ) :
     _debugMessage("p_fact_funcall")
     p[0] = p[1]
 
+def p_fact_methodcall( p ) :
+    'fact : method_call'
+    _debugMessage("p_fact_methodcall")
+    p[0] = p[1]
+
 
 def p_assn( p ) :
     'assign_stmt : IDENT ASSIGNOP element'
@@ -295,6 +300,11 @@ def p_func_call( p ) :
     'func_call : IDENT LPAREN expr_list RPAREN'
     _debugMessage("p_func_call")
     p[0] = FunCall( p[1], p[3] )
+
+def p_method_call( p ):
+    'method_call : IDENT DOT func_call'
+    _debugMessage("p_method_call")
+    p[0] = MethodCall( p[1], p[3] )
 
 
 # List parsing rules #
