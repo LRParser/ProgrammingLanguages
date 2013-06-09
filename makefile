@@ -4,6 +4,9 @@ INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
 SCOPING=func_globals.py
 
+SEMANTICS=semtantics-description
+IMPLEMENTATION=implementation-description
+
 OBJS=$(INTERPRET) $(PROGRAMEXT) $(SCOPING)
 
 TEST_DIR=test
@@ -18,7 +21,7 @@ RELEASE_DIR=release
 RELEASE_FILE=$(ASSIGNMENT).tar.gz
 
 
-.PHONY : clean test view-code compile-static compile-dynamic TAGS release view-tests
+.PHONY : clean run view-code TAGS release view-tests
 
 run-test =                                        \
 	@for file in $(2)*;                       \
@@ -27,10 +30,17 @@ run-test =                                        \
 		$(1) < $$file;                    \
 	done;
 
+view-semantics:
+	@more $(SEMANTICS)
+
+view-implementation:
+	@more $(IMPLEMENTATION)
+
+view-tests:
+	@more $(CLASS_TEST_DIR)* 
+
 view-code: clean
 	@more $(OBJS)
-
-compile-static: clean
 
 TAGS:
 	@etags $(OBJS)
@@ -42,9 +52,6 @@ run: clean
 	@echo "********************"
 	$(call run-test, $(PYTHON) $(INTERPRET), $(CLASS_TEST_DIR))
 
-
-view-tests:
-	@more $(CLASS_TEST_DIR)* 
 
 
 clean:
