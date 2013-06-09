@@ -4,7 +4,7 @@ INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
 SCOPING=func_globals.py
 
-SEMANTICS=semtantics-description
+SEMANTICS=semantics-description
 IMPLEMENTATION=implementation-description
 
 OBJS=$(INTERPRET) $(PROGRAMEXT) $(SCOPING)

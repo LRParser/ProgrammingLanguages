@@ -1,0 +1,24 @@
+The Object-Oriented MiniLanguage is an extension of the MiniLanguage
+with the following syntax for class defintion added:
+
+class CLASSNAME (p1, ..., pn)
+  <stmt_list>
+end;
+
+or (for single inheritence):
+
+class CLASSNAME (p1, ..., pn) : SUPERCLASS
+  <stmt_list>
+end;
+
+The <stmt_list> within the class defintion contains the instance
+variables and methods.
+
+To create an instance of a class, the classname is called with the
+initialization paramters (p1, ..., pn), which results in a Class
+Object being returned.
+
+To call a method of the class instance, you prefix the method call
+with the class name, followed by a period such as:
+
+classname.method(arg1,...,argn)
