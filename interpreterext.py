@@ -64,7 +64,8 @@ tokens = (
     'RBRACKET',
     'LISTCONCATENATOR',
     'CLASS',
-    'DOT'
+    'DOT',
+    'COLON'
 )
 
 # These are all caught in the IDENT rule, typed there.
@@ -79,8 +80,7 @@ reserved = {
     'define'  : 'DEFINE',
     'proc'    : 'PROC',
     'end'     : 'END',
-    'class'   : 'CLASS',
-    'dot'   : 'DOT'
+    'class'   : 'CLASS'
 }
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -102,6 +102,7 @@ t_LBRACKET         = r'\['
 t_RBRACKET         = r'\]'
 t_LISTCONCATENATOR = r'\|\|'
 t_DOT		   = r'\.'
+t_COLON            = r':'
 
 def t_IDENT( t ):
     #r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -277,6 +278,11 @@ def p_class( p ) :
     _debugMessage("p_class")
     p[0] = Class(p[2],p[4], p[6])
 
+def p_class_super( p ) :
+    'class : CLASS IDENT LPAREN param_list RPAREN COLON IDENT stmt_list END'
+    _debugMessage("p_class_super")
+    p[0] = Class(p[2], p[4], p[8], p[7])
+
 def p_def( p ) :
     'define_stmt : DEFINE IDENT proc'
     _debugMessage("p_define_stmt")
@@ -306,11 +312,6 @@ def p_method_call( p ):
     _debugMessage("p_method_call")
     p[0] = MethodCall( p[1], p[3] )
 
-
-def p_method_call(p) :
-    'method_call : IDENT DOT func_call'
-    _debugMessage("p_method_call")
-    p[0] = MethodCall( p[1], p[3] )
 
 # List parsing rules #
 def p_list_lbracket_sequence_rbracket(p):

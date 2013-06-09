@@ -54,7 +54,7 @@ import func_globals
 
 logging.basicConfig(
    format = "%(levelname) -4s %(message)s",
-   level = logging.INFO
+   level = logging.DEBUG
 )
 
 log = logging.getLogger('programext')
@@ -378,23 +378,29 @@ class MethodCall ( Expr ) :
     ''' stores a method call:
       - its name, and arguments'''
 
-    def __init__( self, name, funCall ) :
-        self.name = name
-        self.funCall = funCall
+    def __init__( self, className, funCall ) :
+        log.debug("MethodCall init: %s.%s" % (className, funCall))
+        self.className = className
+        self.func = funCall
 
     def __str__(self):
-        return "MethodCall class <%s> Function <%s>" % (self.name, self.funCall)
+        return "MethodCall class <%s> method <%s>" % (self.className, self.func)
 
     def eval( self, nt ) :
-        func = getattr(self, self.name, None)
-        if func:
-            return func(nt)
+        log.debug("MethodCall eval: %s" % self)
+        log.debug("    %s" % self.className)
+        log.debug("    %s" % nt)
+        classObj = nt[self.className]
+        log.debug("MethodCall classObject %s" % classObj)
+        log.debug("MethodCall: %s" % self.func)
+        if self.func:
+            return self.func.eval(classObj.nt)
         else:
-            log.debug("Undefined Method: %s" % self.name)
+            log.debug("Undefined Method: %s.%s" % (self.className, self.func))
             raise NotImplementedError('Undefined Method')
 
     def display( self, nt, depth=0 ) :
-        print "%sMethod Call: Class %s, %s:" % (tabstop*depth, self.name, self.funCall)
+        print "%sMethod Call: Class %s, %s:" % (tabstop*depth, self.className, self.func)
         
 
 class FunCall( Expr ):
@@ -674,8 +680,8 @@ class StmtList :
 
     def eval( self, nt ) :
         for s in self.sl :
-            if(not(isinstance(s,Class))) :
-                s.eval( nt )
+#            if(not(isinstance(s,Class))) :
+            s.eval( nt )
 
     def display( self, nt, depth=0 ) :
         print "%sSTMT LIST" % (tabstop*depth)
@@ -766,24 +772,34 @@ class Proc :
         self.body.display( nt, depth+1 )
 
 class Class:
-    def __init__( self, className,paramList, body ) :
-        '''expects a list of formal parameters (variables, as strings), and a
-        StmtList'''
-
+    def __init__( self, className, paramList, body, superclass=None ) :
+        '''expects a class name, a list of formal parameters (variables, as 
+           strings), a StmtList, and (possibly) a superclass name'''
         self.className = className
         self.parList = paramList
         self.body = body
+        self.superclass = superclass
+        self.nt = {} 
 
     def __str__(self):
-        return "Class class <>"
+        return "Class %s" % self.className
 
-    def _eval_body(self, nt):
-        self.body.eval( nt )
-        if nt.has_key( returnSymbol ) :
-            return nt[ returnSymbol ]
-        else :
-            log.info("Error: No return value")
-            sys.exit( 2 )
+
+    def eval( self, nt ) :
+        log.debug("Eval Class Defintiion")
+
+        # store class name in global name table
+        nt[self.className] = self
+
+        log.debug("Class %s defined" % self.className)
+        
+        
+    def display( self, nt, depth=0 ) :
+        print "%sCLASS %s :" % (tabstop*depth, str(self.parList))
+        self.body.display( nt, depth+1 )
+
+    def _eval_body(self):
+        return self.body.eval(self.nt)
 
     def _bind_func_arg(self, args, current_nt, new_nt):
         for (param, arg) in zip(self.parList, args):
@@ -800,42 +816,31 @@ class Class:
                 "it's not an arg, probably a Number, so pass"
                 pass
 
-            new_nt[ param ] = arg.eval( current_nt)
+            new_nt[ param ] = arg.eval(current_nt)
 
     def apply( self, nt, args ) :
 
         log.debug("Entering apply")
+
+        # initialize the superclass and copy its nametable
+        if self.superclass is not None:
+            evalSuperClass = nt[self.superclass].apply(nt)
+            self.nt = deepcopy(evalSuperClass.nt)
 
         # sanity check, # of args
         if len( args ) is not len( self.parList ) :
             print "Param count does not match:"
             sys.exit( 1 )
 
-        if func_globals.SCOPING == func_globals.STATIC:
-            #Make a copy of NT, this will be the new environment
-            newContext = copy.deepcopy(nt)
+        # bind parameters in the newContext
+        self._bind_func_arg(args, nt, self.nt)
 
-            # bind parameters in the newContext
-            self._bind_func_arg(args, nt, newContext)
+        # evaluate the function body using the new name table.  Note that the 
+        # proc's return value is stored as 'return in its nametable
+        self._eval_body()
 
-            # evaluate the function body using the new name table and the old (only)
-            # function table.  Note that the proc's return value is stored as
-            # 'return in its nametable
+        return self
 
-            return self._eval_body(newContext)
-
-        else:
-            #just use the nt passed in from the caller
-            log.debug("Applying dynamic scope")
-
-            self._bind_func_arg(args, nt, nt)
-
-            #but first, rebind and functions
-            return self._eval_body(nt)
-
-    def display( self, nt, depth=0 ) :
-        print "%sCLASS %s :" % (tabstop*depth, str(self.parList))
-        self.body.display( nt, depth+1 )
 
 
 class Program :

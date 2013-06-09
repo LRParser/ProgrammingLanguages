@@ -1,6 +1,6 @@
 class list(init)
-    L := init;
-    Car := proc() return := car(L) end
+    Head := init;
+    Car := proc() return := car(Head) end
 end;
 
 L := list([1,2]);
