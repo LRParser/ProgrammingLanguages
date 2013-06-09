@@ -393,6 +393,7 @@ class MethodCall ( Expr ) :
         classObj = nt[self.className]
         log.debug("MethodCall classObject %s" % classObj)
         log.debug("MethodCall: %s" % self.func)
+        log.debug("MethodCall: %s" % classObj.nt)
         if self.func:
             return self.func.eval(classObj.nt)
         else:
@@ -509,6 +510,8 @@ class FunCall( Expr ):
         if not(len(self.argList) == 2) :
             raise Exception("Cons function requires exactly 2 arguments")
 
+        log.debug("args: %s" % self.argList)
+        
         # evaluate the first argument
         arg1 = self.argList[0]
         if (isinstance(arg1, Ident) or isinstance(arg1, FunCall)) :
@@ -531,7 +534,10 @@ class FunCall( Expr ):
             destList = arg2.eval(nt)
             if isinstance(destList, int) :
                 raise Exception("Can only cons an object onto a List")
-            evalDestList = destList.eval(nt)
+            if (isinstance(destList, list)):
+                evalDestList = destList
+            else :
+                evalDestList = destList.eval(nt)
         else :
             evalDestList = arg2.eval(nt)
         if not(isinstance(evalDestList, list)) :
@@ -737,7 +743,7 @@ class Proc :
 
     def apply( self, nt, args ) :
 
-        log.debug("Entering apply")
+        log.debug("Proc: entering apply")
 
         # sanity check, # of args
         if (self.parList != None):
@@ -820,7 +826,7 @@ class Class:
 
     def apply( self, nt, args ) :
 
-        log.debug("Entering apply")
+        log.debug("Class class: Entering apply")
 
         # initialize the superclass and copy its nametable
         if self.superclass is not None:

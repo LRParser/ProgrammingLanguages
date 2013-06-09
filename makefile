@@ -2,8 +2,9 @@ PYTHON=python
 
 INTERPRET=interpreterext.py
 PROGRAMEXT=programext.py
+SCOPING=func_globals.py
 
-OBJS=$(INTERPRET) $(PROGRAMEXT)
+OBJS=$(INTERPRET) $(PROGRAMEXT) $(SCOPING)
 
 DYN_INTERPET=$(INTERPRET) --dynamic-scope
 
@@ -21,7 +22,7 @@ RELEASE_DIR=release
 RELEASE_FILE=$(ASSIGNMENT).tar.gz
 
 
-.PHONY : clean test view compile-static compile-dynamic TAGS release view-tests
+.PHONY : clean test view-code compile-static compile-dynamic TAGS release view-tests
 
 run-test =                                        \
 	@for file in $(2)*;                       \
@@ -30,7 +31,7 @@ run-test =                                        \
 		$(1) < $$file;                    \
 	done;
 
-view: clean
+view-code: clean
 	@more $(OBJS)
 
 compile-static: clean

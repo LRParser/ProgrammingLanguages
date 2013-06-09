@@ -1,4 +1,4 @@
-Group #9 Assignment #6
+Group #9 Extra Credit Assignment
 	Jon Boone
 	Joshua Datko
 	Paul DeMicco
@@ -8,52 +8,42 @@ ________________
 =======
 interpreterext.py
 
-Contains the grammar for the original mini language.  The syntax change was to
-change the define statement to:
+Contains the grammar for the modified mini language.  The syntax
+change was to add class defintion, both with and without single
+inheritance, and method call functionality. 
 
-'define_stmt : DEFINE IDENT proc'
-
-from:
-
-'define_stmt : DEFINE IDENT PROC LPAREN param_list RPAREN stmt_list END'
 
 programext.py
 
-Implements functions as first class citizens in the mini-language.  The major
-high level features were implemented:
+Implements class defintion and method calls in the mini-language.  The
+major high level features were implemented:
 
-* Removed the function table.  Since functions are now first class, they are
-  treated as variables.
-* Lexical scoping: we extend the environment in the "apply" function by
-  creating a new name table and binding the parameters with the evaluated
-  arguments for that particular function.
-* Assign Statements were modified to add Procs to the name table directly.
-* Dynamic scoping: In "apply" we use the caller's environment to bind the
-  parameters and arguments instead of extending the environment.
+* Created class object entries in the global name table.
+* Defined class-specific name table to hold class variables and
+  methods. 
 
 func_globals.py
 
-Global variable to keep track of what scoping rules are in play.
+Global variable to keep track of what scoping rules are in play.  Left
+over from assignment 6. 
 
 
 makefile
 
-view —
+view-semantics --
+    description of syntax and semantics
+
+view-implementation --
+    description of implementation
+
+view-tests --
+    document describing the test inputs
+    
+view-code —
     display (using the more utility) all of your source code
-
-compile-static —
-    Does whatever you need to do to get ready to run your statically-bound
-    interpreter (even if it's nothing)
-
-compile-dynamic —
-    Does whatever you need to do to get ready to run your statically-bound
-    interpreter (even if it's nothing)
 
 run-static —
     Run your statically-bound interpreter, which will read from stdin
-
-run-dynamic —
-    Run your dynamically-bound interpreter, which will read from stdin
 
 clean —
     remove all binaries and intermediate files
@@ -133,34 +123,12 @@ Conveniently view all test files.
 TESTING:
 
 
-All test case files (*.p) have been run through the interpreters to ensure
+The following test case files (*.p) have been run through the interpreters to ensure
 proper operation.
 
 
-static_tests/add1Func.p:
+class_tests/class_list.p
 
-Tests assigning a function to a variable and then invoking said variable with a
-function call.
+Tests creation of a list class, the creation of an instance of the
+list class, as well as the invocation of a method of the class. 
 
-static_tests/func_param1.p:
-
-Tests passing a function as a parameter and invoking said function in the new
-function.
-
-static_tests/makeAdder.p:
-
-Tests nested functions and returning functions from other functions.
-
-static_tests/nestedFuncs.p:
-
-Tests successive function calls from functions assigned to variables.
-
-dyn_tests/add1.p:
-
-Uses dynamic scope to implement a function that will result in an unbound
-variable if using static scope.  (i.e. only works dynamically.)
-
-dyn_tests/static_dynamic.p:
-
-A program with two different results in the two approaches (specifically the
-"b" is different).
