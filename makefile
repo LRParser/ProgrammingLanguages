@@ -6,17 +6,13 @@ SCOPING=func_globals.py
 
 OBJS=$(INTERPRET) $(PROGRAMEXT) $(SCOPING)
 
-DYN_INTERPET=$(INTERPRET) --dynamic-scope
-
 TEST_DIR=test
-STATIC_TEST_DIR=$(TEST_DIR)/static_tests/
-DYNAMIC_TEST_DIR=$(TEST_DIR)/dyn_tests/
-
+CLASS_TEST_DIR=$(TEST_DIR)/class_tests/
 
 TOP ?= $(shell pwd)
 
 HOST=$(shell hostname)
-ASSIGNMENT=A6
+ASSIGNMENT=Aoom
 
 RELEASE_DIR=release
 RELEASE_FILE=$(ASSIGNMENT).tar.gz
@@ -36,31 +32,19 @@ view-code: clean
 
 compile-static: clean
 
-compile-dynamic: clean
-
-run-static: clean
-	@$(PYTHON) $(INTERPRET)
-
-run-dynamic: clean
-	@$(PYTHON) $(DYN_INTERPET)
-
 TAGS:
 	@etags $(OBJS)
 
 
-test: clean
+run: clean
 	@echo "********************"
-	@echo "Running Static Tests"
+	@echo "Running Class Tests"
 	@echo "********************"
-	$(call run-test, $(PYTHON) $(INTERPRET), $(STATIC_TEST_DIR))
+	$(call run-test, $(PYTHON) $(INTERPRET), $(CLASS_TEST_DIR))
 
-	@echo "********************"
-	@echo "Running Dynamic Tests"
-	@echo "********************"
-	$(call run-test, $(PYTHON) $(DYN_INTERPET), $(DYNAMIC_TEST_DIR))
 
 view-tests:
-	@more $(STATIC_TEST_DIR)* $(DYNAMIC_TEST_DIR)*
+	@more $(CLASS_TEST_DIR)* 
 
 
 clean:
